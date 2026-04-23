@@ -1,0 +1,11 @@
+/* 9630408 - 1/23/25 - Jon B */
+
+body:not(.fsComposeMode) .fsPagePopDialog .fsPagePopTitle {
+	display: none;
+}
+
+/* 9786115 - Jon B - 11/20/25 */
+
+.fsGrid.bpa-post-filter-1 article {
+    overflow: hidden;
+}

@@ -1,0 +1,1248 @@
+ /**
+ *
+ * Northfield Mount Hermon School - default_17
+ * @link http://nmhschoolorg.finalsite.com
+ * Site Template : newclientcustom
+ * Built By: Jorge Piquer
+ * Project Manager: Mike Hartzler
+ * Designer: Nathan Lyttle
+ * ==== Git Info ====
+ * Branch Name: clients/nmhschoolorg
+ * Build version: 3.2.6
+ * Git Tag: v3.0-208-g99d3a9ac27
+ * Last build by: James Brettschneider
+ *
+ **/
+
+// Build package info 
+window.buildinfo = {
+  buildname : 'fs-composer-build',
+  ver : '3.2.6',
+  template : 'newclientcustom'
+};
+
+/*!
+ * global_vars is a file particular to your site
+ * it contains base functions that are likely but not always used
+ **/ 
+
+// configure fonts to load from vendors
+// check src/js/plugins/fontLoader.js for reference
+WebFontConfig = {
+  monotype: { //fonts.com
+    projectId: '2cbe341b-e86c-4569-9d6d-dff3779569f9'
+  }
+};
+
+
+jQuery(function($) {
+
+  'use strict';
+
+  var HOME;
+  var ATHLETICS;
+  var HUB;
+  var OFFCANVAS;
+  var SUBNAV;
+  var UTIL;
+
+  var $body = $('body');
+  var $navMain = $('.nav-main');
+  var $navSub = $('.nav-sub');
+  var $navMain_level1 = $('#fsHeader').find('.nav-main .fsNavLevel1');
+  var sectionTitle = $navMain_level1.find('> li[class*="fsNavCurrentPage"] > a').text();
+  var $navSub_title = $navSub.find('> header > .fsElementTitle');
+  var bpMobile = 600;
+  var bpTablet = 900;
+  var bpLandscape = 1000;
+  var isHome = $('.home').length;
+  var isAthletics = $('.athletics').length;
+  var isHub = $('.hub-page').length;
+  var isDirectory = $('.directory').length;
+  var notDraftMode = !$('.fsDraftMode').length; // if (isHome && notDraftMode)....
+  var notComposeMode = !$('.fsComposeMode').length;
+
+  //check if browser supports placeholders for placeholder()
+  $.support.placeholder = (function() {
+    var i = document.createElement('input');
+    return 'placeholder' in i;
+  })();
+
+
+  // check for buildinfo and add classes to body tag
+  (function() {
+
+    if (window.buildinfo !== undefined) {
+      var b = document.getElementsByTagName('body')[0];
+      b.setAttribute('data-buildver', window.buildinfo.ver);
+      b.setAttribute('data-sitetemplate', window.buildinfo.template);
+
+      /*
+           // how to style against certain versions
+           body[data-buildver^="2.0"]{
+           margin-top: 100px;
+           }
+       */
+    }
+
+  })();
+
+  $('window').on('load', function() {
+    $('goog-te-gadget label').text('English');
+  });
+
+  // ================================
+  // Home
+  // ================================
+
+  HOME = {
+
+
+    init: function() {
+
+      // NOTE: call HOME functions here like
+      this.slideshow();
+      //this.infographic();
+      this.homeCalendarNews();
+
+    },
+
+    slideshow: function() {
+
+      $('.home').each(function() {
+
+        var sliderArray = $(this).find('.universal-slideshow, .resource-slider').toArray();
+        var sliderShow = sliderArray[Math.floor(Math.random() * sliderArray.length)];
+        $(sliderShow).addClass('active-slider');
+        $('body:not(.fsDraftMode) .resource-slider:not(.active-slider)').remove();
+
+      });
+
+      // src/plugins/fsMediaPull.js
+      $('.active-slider:not(.resource-slider)').each(function() {
+        var self = $(this);
+
+        self.mediaSlider({
+          mediaTemplate: [
+            '<article class="universal-slide" style="background-image: url({imgSrc});">',
+            '<img src="{imgSrc}" alt="{captionTitle}" class="universal-img" />',
+            '<div class="caption-wrapper">',
+            '<div class="caption-title">{captionTitle}</div>',
+            '<div class="caption-desc">{captionDesc}</div>',
+            '</div>',
+            '</article>'
+          ], // html markup
+
+          slick: {
+            variableWidth: false,
+            arrows: false,
+            autoplay: true,
+          }
+        });
+      });
+
+      if ($('.active-slider.resource-slider').length) {
+          $('.resource-slider').find('article').each(function() {
+            if ($(this).hasClass('fsResourceTypeImage')) {
+              var figure = $(this).find('figure');
+              var myImg = $(this).find('img');
+              myImg.attr('src', getImageSize(myImg));
+              backgroundImage($(figure));
+            }
+          });
+
+          var checkSlider = setInterval(function() {
+            var slickSlide = $(".resource-slider .slick-slider.slick-initialized");
+            if (slickSlide.length) {
+              clearInterval(checkSlider);
+              slickSlide.slick('slickSetOption', 'pauseOnHover', false, false);
+              slickSlide.slick('slickSetOption', 'pauseOnFocus', false, false);
+
+              slickSlide.on({
+                'beforeChange': function(event, slick, currentSlide, nextSlide) {
+                  var video = slick.$slides.eq(slick.currentSlide).find('video');
+                  if (video.length) {
+                    video[0].pause();
+                    slick.slickPlay();
+                  } else {
+                    slick.slickPause();
+                  }
+                },
+                'afterChange': function(event, slick, currentSlide, nextSlide) {
+                  var video = slick.$slides.eq(slick.currentSlide).find('video');
+                  if (video.length) {
+                    video[0].play();
+                  } else {
+                    slick.slickPlay();
+                  }
+                }
+              });
+
+            }
+          }, 100);
+
+        ///
+      }
+    },
+
+    infographic: function() {
+
+      if (notDraftMode) {
+        $('.infographic-container > .fsElementContent').slick({
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          arrows: true,
+          dots: false,
+        });
+      }
+
+      $(window).on('load', function() {
+        $('.infographic-container .slick-prev').prependTo('.infographic-container .slick-list');
+        $('.infographic-container .slick-next').appendTo('.infographic-container .slick-list');
+      });
+    },
+
+    homeCalendarNews: function() {
+      $('.home-calendar article').each(function() {
+        var date = $(this).find('.fsDate');
+        date.appendTo(this);
+        date.find('.fsSeparator').append("<br>");
+      });
+
+      $('.home-news article').each(function() {
+        $(this).children().not('.fsThumbnail').wrapAll("<div class='news-wrapper'></div>");
+      });
+
+      $(window).on('load', function() {
+        $('.fsSummary').dotdotdot({
+          watch: 'window'
+        });
+      });
+
+
+      $('.home-news .fsCategory-3').insertAfter('.home-news article:nth-of-type(3)');
+
+      $('.home-news .fsListItems').slick({
+        slidesToShow: 4,
+        slidesToScroll: 1,
+        arrows: true,
+        dots: false,
+        responsive: [{
+            breakpoint: bpLandscape,
+            settings: {
+              slidesToShow: 4
+            }
+          },
+          {
+            breakpoint: bpTablet,
+            settings: {
+              slidesToShow: 3
+            }
+          },
+          {
+            breakpoint: 750,
+            settings: {
+              slidesToShow: 2
+            }
+          },
+          {
+            breakpoint: bpMobile,
+            settings: {
+              slidesToShow: 1
+            }
+          }
+        ]
+      });
+
+      $('.home-news article').each(function() {
+        if (!$(this).find('>.fsThumbnail').length) {
+          var slug = $(this).find('.fsTitle > a').attr('data-slug');
+          var href = $(this).find('.fsTitle > a').attr('href');
+
+          $(this).prepend('<a class="fsThumbnail fsPostLink" data-slug="' + slug + '" data-opens-in="popup" href="' + href + '" tabindex="0"><img src="../uploaded/themes/default_17/images/news-default-thumb.jpg" alt="NMH News" class="default-image" /></a>');
+        }
+      });
+
+    },
+
+  };
+
+  if (isHome) {
+
+    HOME.init();
+
+  }
+
+  // ================================
+  // Athletics
+  // ================================
+
+  ATHLETICS = {
+
+
+    init: function() {
+
+      // NOTE: call HOME functions here like
+      this.slideshow();
+      this.athleticsCalendarNews();
+      this.athleticsInfographic();
+      this.athleticsFeeds();
+      this.teamsNav();
+
+      if (notDraftMode) {
+        this.pullPages();
+        this.athleteWeek();
+      }
+
+    },
+
+    slideshow: function() {
+
+      // src/plugins/fsMediaPull.js
+      $('.universal-slideshow').each(function() {
+        var self = $(this);
+
+        self.mediaSlider({
+          mediaTemplate: [
+            '<article class="universal-slide" style="background-image: url({imgSrc});">',
+            '<img src="{imgSrc}" alt="{captionTitle}" class="universal-img" />',
+            '<div class="caption-wrapper">',
+            '<div class="caption-title">{captionTitle}</div>',
+            '<div class="caption-desc">{captionDesc}</div>',
+            '</div>',
+            '</article>'
+          ], // html markup
+
+          slick: {
+            arrows: false,
+            autoplay: true
+          }
+        });
+      });
+
+      //
+      $('.athletics .resource-slider').find('article').each(function() {
+        if ($(this).hasClass('fsResourceTypeImage')) {
+          var myImg = $(this).find('img');
+          myImg.attr('src', getImageSize(myImg));
+          backgroundImage($(this));
+        }
+      });
+
+      var checkSlider = setInterval(function() {
+        var slickSlide = $(".resource-slider .slick-slider.slick-initialized");
+        if (slickSlide.length) {
+          clearInterval(checkSlider);
+          slickSlide.slick('slickSetOption', 'pauseOnHover', false, false);
+          slickSlide.slick('slickSetOption', 'pauseOnFocus', false, false);
+
+          slickSlide.on({
+            'beforeChange': function(event, slick, currentSlide, nextSlide) {
+              var video = slick.$slides.eq(slick.currentSlide).find('video');
+              if (video.length) {
+                video[0].pause();
+                slick.slickPlay();
+              } else {
+                slick.slickPause();
+              }
+            },
+            'afterChange': function(event, slick, currentSlide, nextSlide) {
+              var video = slick.$slides.eq(slick.currentSlide).find('video');
+              if (video.length) {
+                video[0].play();
+              } else {
+                slick.slickPlay();
+              }
+            }
+          });
+
+        }
+      }, 100);
+      //
+    },
+
+    athleticsCalendarNews: function() {
+      $('.athletics-calendar article').each(function() {
+        var date = $(this).find('.fsDate');
+        date.appendTo(this);
+      });
+
+      $('.athletics-news article').each(function() {
+        $(this).children().not('.fsThumbnail').wrapAll("<div class='news-wrapper'></div>");
+      });
+
+      $('.fsSummary').dotdotdot({
+        watch: 'window'
+      });
+
+      $('.athletics-news .fsCategory-36').insertAfter('.athletics-news article:nth-of-type(2)');
+
+
+      $('.athletics-news .fsListItems').slick({
+        slidesToShow: 4,
+        slidesToScroll: 1,
+        arrows: true,
+        dots: false,
+        responsive: [{
+            breakpoint: bpLandscape,
+            settings: {
+              slidesToShow: 4
+            }
+          },
+          {
+            breakpoint: bpTablet,
+            settings: {
+              slidesToShow: 3
+            }
+          },
+          {
+            breakpoint: 750,
+            settings: {
+              slidesToShow: 2
+            }
+          },
+          {
+            breakpoint: bpMobile,
+            settings: {
+              slidesToShow: 1
+            }
+          }
+        ]
+      });
+
+      $('.athletics-news article').each(function() {
+        if (!$(this).find('>.fsThumbnail').length) {
+          var slug = $(this).find('.fsTitle > a').attr('data-slug');
+          var href = $(this).find('.fsTitle > a').attr('href');
+
+          $(this).prepend('<a class="fsThumbnail fsPostLink" data-slug="' + slug + '" data-opens-in="popup" href="' + href + '" tabindex="0"><img src="../uploaded/themes/default_17/images/news-default-thumb.jpg" alt="NMH Athletics" /></a>');
+        }
+      });
+
+    },
+
+    athleticsInfographic: function() {
+
+      $('body:not(.fsComposeMode) .athletics-infographic > .fsElementContent').slick({
+        slidesToShow: 1,
+        slidesToScroll: 1,
+        arrows: true,
+        dots: false,
+      });
+
+      $('body:not(.fsComposeMode) .athletics-infographic .athletics-slide').each(function() {
+        $(this).find('header').insertAfter($(this).find('img'));
+        $(this).find('footer').insertAfter($(this).find('p'));
+      });
+    },
+
+    athleticsFeeds: function() {
+
+      $('.twitter-feed').each(function() {
+        var self = $(this);
+        self.fsFeedPull(5, {
+          feedTemplate: [
+            '<article class="fsFeed-post">',
+            '<img class="poster-image" src="{posterImage}" />',
+            '<div class="feed-content">',
+            '<div class="poster-name">{posterName}</div>',
+            '<div class="poster-tag">@{posterName}</div>',
+            '<div class="feed-desc">{feedDesc}</div>',
+            '</div>',
+            '</article>'
+          ], // html markup
+
+          callback: function() {}
+        });
+      });
+      $('.facebook-feed').each(function() {
+        var self = $(this);
+        self.fsFeedPull(5, {
+          feedTemplate: [
+            '<article class="fsFeed-post">',
+            '<img src="{imgSrc}" class="feed-img" />',
+            '<div class="feed-content">',
+            // '<div class="like-count">{likeCount}</div>',
+            '<div class="feed-desc">{feedDesc}</div>',
+            '</div>',
+            '</article>'
+          ], // html markup
+
+          callback: function() {}
+        });
+      });
+      $('.instagram-feed').each(function() {
+        var self = $(this);
+        self.fsFeedPull(15, {
+          feedTemplate: [
+            '<article class="fsFeed-post" style="background-image: url({imgSrc});">',
+            '<a href="{postUrl}" class="feed-link" >',
+            '<img src="{imgSrc}" class="feed-img" />',
+            '</a>',
+            '<div class="feed-content">',
+            // '<div class="like-count">{likeCount}</div>',
+            // '<div class="feed-desc">{feedDesc}</div>',
+            '</div>',
+            '</article>'
+          ], // html markup
+
+          callback: function() {}
+        });
+      });
+    },
+
+    tabsPull: function() {
+      $('.team-tabs a').click(function(event) {
+        event.preventDefault();
+      });
+
+      $('.team-tabs').find(".fsNavLevel1").accessibility_menu();
+
+      var $athleticsPullWrapper = $('.team-tabs .fsNavLevel1 > li');
+
+      $athleticsPullWrapper.click(function() {
+
+        var $linkAttr = $(this).find('> a').attr('href');
+
+        $athleticsPullWrapper.removeClass('clicked opened');
+        $(this).addClass('clicked');
+
+        $('.athletics-pull-container').removeClass('active');
+
+        $('.team-schedule').removeClass('schedule-open');
+        $('.team-roster').removeClass('roster-open');
+
+        if ($(this).hasClass('clicked')) {
+
+          if ($(this).hasClass('schedule')) {
+            $('.overview').addClass('schedule-open');
+            if ($('.team-nav .varsity').hasClass('clicked')) {
+              $('.team-schedule.varsity').addClass('schedule-open');
+            } else if ($('.team-nav .jv').hasClass('clicked')) {
+              $('.team-schedule.jv').addClass('schedule-open');
+            } else if ($('.team-nav .thirds').hasClass('clicked')) {
+              $('.team-schedule.thirds').addClass('schedule-open');
+            } else if ($('.team-nav .national').hasClass('clicked')) {
+              $('.team-schedule.national').addClass('schedule-open');
+            } else if ($('.team-nav .prep').hasClass('clicked')) {
+              $('.team-schedule.prep').addClass('schedule-open');
+            }
+          } else {
+            $('.team-schedule').removeClass('schedule-open');
+            $('.overview').removeClass('schedule-open');
+          }
+
+          if ($(this).hasClass('roster')) {
+            $('.overview').addClass('roster-open');
+            if ($('.team-nav .varsity').hasClass('clicked')) {
+              $('.team-roster.varsity').addClass('roster-open');
+            } else if ($('.team-nav .jv').hasClass('clicked')) {
+              $('.team-roster.jv').addClass('roster-open');
+            } else if ($('.team-nav .thirds').hasClass('clicked')) {
+              $('.team-roster.thirds').addClass('roster-open');
+            } else if ($('.team-nav .national').hasClass('clicked')) {
+              $('.team-roster.national').addClass('roster-open');
+            } else if ($('.team-nav .prep').hasClass('clicked')) {
+              $('.team-roster.prep').addClass('roster-open');
+            }
+          } else {
+            $('.team-roster').removeClass('roster-open');
+            $('.overview').removeClass('roster-open');
+          }
+
+          $(".athletics-pull-container.overview > .fsElementContent").load($linkAttr + " .pull-page-wrapper", function() {
+            // UTIL.tableScroll();
+
+            $(window).on('load', function() {
+              $('.fsCoaches .fsAthleticsRosterList > li').each(function() {
+                $(this).find('.fsCoachImage').appendTo(this);
+              });
+            });
+
+          });
+
+          $('.athletics-pull-container.master').addClass('overview-active');
+          $('.athletics-pull-container.overview').addClass('has-content active');
+
+        } else {
+          $('.athletics-pull-container.master').removeClass('overview-active');
+        }
+
+        $(this).addClass('opened');
+
+        return false;
+
+      });
+
+    },
+
+    pullPages: function() {
+
+      var $athleticsTeamPullWrapper = $('.team-nav .fsNavLevel1 > li');
+
+      $('.team-nav a').click(function(event) {
+        event.preventDefault();
+
+        $('.team-schedule').removeClass('schedule-open');
+      });
+
+      if ($('.team-page').length) {
+
+        $('.team-nav .fsNavLevel1 > li:first-of-type').addClass('clicked opened');
+
+        var $linkNavStart = $('.team-nav .fsNavLevel1 > li > a').attr('href');
+
+        $('.athletics-pull-container.record > .fsElementContent').load($linkNavStart + " .pull-page-record");
+
+        $('.athletics-pull-container.team > .fsElementContent').load($linkNavStart + " .pull-page-wrapper", function() {
+
+          if (window.location.href.indexOf('#schedule') > -1) {
+            $('.team-tabs .fsNavLevel1 > li.schedule').addClass('clicked opened');
+          } else if (window.location.href.indexOf('#roster') > -1) {
+            $('.team-roster.varsity').addClass('roster-open');
+            $('.team-tabs .fsNavLevel1 > li.roster').addClass('clicked opened');
+          } else {
+            $('.team-tabs .fsNavLevel1 > li:first-of-type').addClass('clicked opened');
+          }
+
+
+          if ($('.team-tabs .fsNavLevel1 > li.clicked').hasClass('schedule')) {
+            $('.team-schedule').removeClass('schedule-open');
+            $('.overview').addClass('schedule-open');
+            if ($('.team-nav .varsity').hasClass('clicked')) {
+              $('.team-schedule.varsity').addClass('schedule-open');
+            } else if ($('.team-nav .jv').hasClass('clicked')) {
+              $('.team-schedule.jv').addClass('schedule-open');
+            } else if ($('.team-nav .thirds').hasClass('clicked')) {
+              $('.team-schedule.thirds').addClass('schedule-open');
+            } else if ($('.team-nav .national').hasClass('clicked')) {
+              $('.team-schedule.national').addClass('schedule-open');
+            } else if ($('.team-nav .prep').hasClass('clicked')) {
+              $('.team-schedule.prep').addClass('schedule-open');
+            }
+          } else {
+            $('.team-schedule').removeClass('schedule-open');
+            $('.overview').removeClass('schedule-open');
+          }
+
+          // if ($('.team-tabs .fsNavLevel1 > li.clicked').hasClass('roster')) {
+          //   $('.team-roster').removeClass('roster-open');
+          //   $('.overview').addClass('roster-open');
+          //   if ($('.team-nav .varsity').hasClass('clicked')) {
+          //     $('.team-roster.varsity').addClass('roster-open');
+          //   } else if($('.team-nav .jv').hasClass('clicked')) {
+          //     $('.team-roster.jv').addClass('roster-open');
+          //   } else if($('.team-nav .thirds').hasClass('clicked')) {
+          //     $('.team-roster.thirds').addClass('roster-open');
+          //   }
+          // } else {
+          //   $('.team-roster').removeClass('roster-open');
+          //   $('.overview').removeClass('roster-open');
+          // }
+
+          var $linkTabStart = $('.team-tabs .fsNavLevel1 > li.clicked > a').attr('href');
+
+          $('.athletics-pull-container.overview > .fsElementContent').load($linkTabStart + " .pull-page-wrapper", function() {
+            ATHLETICS.tabsPull();
+            FS.util.updateDynamicImages($('.fsImage, .fsResourceTypeImage figure'));
+
+            $('.fsResourceElement .fsElementSlideshow').slick({
+              slidesToShow: 1,
+              slidesToScroll: 1,
+              arrows: true,
+              dots: false,
+            });
+
+          });
+        });
+      }
+
+      $athleticsTeamPullWrapper.click(function(e) {
+
+        var $linkAttr = $(this).find('> a').attr('href');
+
+        $athleticsTeamPullWrapper.removeClass('clicked opened');
+
+        $(this).addClass('clicked');
+
+        $('.athletics-pull-container').removeClass('active');
+
+        $('.athletics-pull-container.record > .fsElementContent').load($linkAttr + " .pull-page-record");
+
+        if ($(this).hasClass('clicked')) {
+
+          $(".athletics-pull-container.team > .fsElementContent").load($linkAttr + " .pull-page-wrapper", function() {
+            $('.team-tabs .fsNavLevel1 > li:first-of-type').addClass('clicked opened');
+            var $linkTabStart = $('.team-tabs .fsNavLevel1 > li > a').attr('href');
+            $('.athletics-pull-container.overview > .fsElementContent').load($linkTabStart + " .pull-page-wrapper", function() {
+              ATHLETICS.tabsPull();
+
+              if ($('.team-tabs .fsNavLevel1 > li.clicked').hasClass('roster')) {
+                $('.team-roster').removeClass('roster-open');
+                $('.overview').addClass('roster-open');
+                if ($('.team-nav .varsity').hasClass('clicked')) {
+                  $('.team-roster.varsity').addClass('roster-open');
+                } else if ($('.team-nav .jv').hasClass('clicked')) {
+                  $('.team-roster.jv').addClass('roster-open');
+                } else if ($('.team-nav .thirds').hasClass('clicked')) {
+                  $('.team-roster.thirds').addClass('roster-open');
+                } else if ($('.team-nav .national').hasClass('clicked')) {
+                  $('.team-roster.national').addClass('roster-open');
+                } else if ($('.team-nav .prep').hasClass('clicked')) {
+                  $('.team-roster.prep').addClass('roster-open');
+                }
+              } else {
+                $('.team-roster').removeClass('roster-open');
+                $('.overview').removeClass('roster-open');
+              }
+            });
+          });
+
+        } else {
+          $('.athletics-pull-container.master').removeClass('overview-active');
+        }
+
+        $(this).addClass('opened');
+
+        return false;
+
+      });
+    },
+
+    teamsNav: function() {
+
+      $('.athletics .nav-main .fsNavLevel3 > li').each(function() {
+        var parentLink = $(this).find('a').attr('href');
+        $(this).append("<a href='" + parentLink + "#schedule' class='team-nav-schedule'>Schedule</a>");
+        $(this).append("<a href='" + parentLink + "#roster' class='team-nav-roster'>Roster</a>");
+      });
+
+      $('.athletics .nav-main .fsNavLevel3 > li > a').on('click', function() {
+        $('.team-tabs .fsNavLevel1 > li').removeClass('clicked opened');
+        $('.team-nav .fsNavLevel1 > li').removeClass('clicked opened');
+
+        ATHLETICS.pullPages();
+
+      });
+    },
+
+    athleteWeek: function() {
+
+      $('.athlete-of-week').each(function() {
+        var athleteLink = $('.athlete-of-week footer a').attr('href');
+        $(this).wrapInner("<a href='" + athleteLink + "'></a>");
+      });
+    }
+
+  };
+
+  if (isAthletics) {
+
+    ATHLETICS.init();
+
+    if (notComposeMode) {
+      $('.footer-image').prependTo('.fsFooter > .fsBanner');
+    }
+
+  }
+
+  // ================================
+  // The HUB
+  // ================================
+
+  HUB = {
+
+    init: function() {
+      this.hubMenu();
+    },
+
+    hubMenu: function() {
+
+      $('.nav-hub .fsNavLevel1 > li > a').on('click', function(event) {
+        event.preventDefault();
+        var liParent = $(this).parent('li');
+        liParent.toggleClass('menu-open');
+        $('.nav-hub .fsNavLevel1 > li').not(liParent).removeClass('menu-open');
+        // $(this).unbind('click').click();
+      });
+
+      $('.nav-hub .fsNavLevel2 .fsNavParentPage > a').on('click', function(event) {
+        if ($(this).hasClass('menu-open')) {
+          $(this).unbind('click').click();
+        } else {
+          event.preventDefault();
+          var liParent = $(this).parent('li');
+          liParent.toggleClass('menu-open');
+          // $('.nav-hub .fsNavLevel2 li').not(liParent).removeClass('menu-open');
+        }
+      });
+
+      $(document).on('click', function(event) {
+        if (!$(event.target).closest('.nav-hub').length) {
+          $('.nav-hub li').removeClass('menu-open');
+        }
+      });
+
+    }
+  };
+
+  if (isHub) {
+
+    HUB.init();
+
+  }
+
+  // ================================
+  // Off Canvas Menu
+  // ================================
+
+  OFFCANVAS = {
+
+    init: function() {
+      this.menuSetup();
+      this.clickHandler();
+    },
+
+    menuSetup: function() {
+      $('.drawer-trigger-element').prependTo('#fsPageWrapper');
+
+      $('.fsMenu').prepend('<div class="close-btn"></div>');
+
+      $('.close-btn').on('click', function() {
+        $('body').removeClass('drawer-is-active');
+      });
+    },
+
+    clickHandler: function() {
+      // Toggle attribute of the body
+      $('.drawer-trigger').click(function() {
+        $body.toggleClass('drawer-is-active');
+      });
+
+      // Remove attribute on the bottom if anything other than
+      // what is mentioned is clicked on
+      $(document).on('click', function(event) {
+        if (!$(event.target).closest('#fsMenu, .drawer-trigger').length) {
+          $body.removeClass('drawer-is-active');
+        }
+      });
+    }
+
+  };
+
+  OFFCANVAS.init();
+
+  // ================================
+  // Sub Navigation
+  // ================================
+
+  SUBNAV = {
+
+    init: function() {
+
+      this.title();
+      this.mobileNav();
+
+    },
+
+    // Create a section title based on the current page
+    title: function() {
+      if (sectionTitle.length !== 0) {
+        $navSub_title.html('In This Section');
+      }
+
+      if ($navSub.find('nav .fsNavLevel1').length !== 0) {
+        $navSub.removeClass('nav-sub-empty');
+      } else {
+        $navSub.addClass('nav-sub-empty');
+      }
+
+    },
+
+    mobileNav: function() {
+      // nav-sub - mobile toggle
+      $navSub_title.click(function() {
+        $(this).closest($navSub).toggleClass('active-nav');
+      });
+
+      // nav-sub remove click elsewhere
+      $(document).on('click', function(event) {
+        if (!$(event.target).closest($navSub).length) {
+          $navSub.removeClass('active-nav');
+        }
+      });
+
+    }
+
+  };
+
+  SUBNAV.init();
+
+  // ================================
+  // Utility & milliseconds Functions
+  // ================================
+
+  UTIL = {
+
+    init: function() {
+
+      this.respondSliders();
+      this.accessibilityMenu();
+      this.googleTranslateAccessibility();
+      this.imageModule();
+      this.calendarWrapper();
+      this.newsArticles();
+      this.calloutLink();
+      this.mainMenu();
+      if($('body:not(.publications-2):not(.publications-2022)').length) {
+        this.fixedNav();
+      }
+      this.quicklinks();
+      this.announcement();
+      this.miscellaniousFunctions();
+      this.imageFlaot();
+      this.profileRandomizer();
+
+    },
+
+    respondSliders: function() {
+
+      // ================================
+      // Responsive Built-in sliders
+      // ================================
+
+      // the following takes care of the news/calendar slideshow option
+      // and makes them responsive
+
+      var targets = [
+        // '.fsPostElement.fsSlideshow',
+        '.fsCalendar.fsSlideshow'
+      ];
+
+      var bp = [{
+        breakpoint: bpLandscape,
+        settings: {
+          slidesToShow: 4,
+        }
+      }, {
+        breakpoint: bpTablet,
+        settings: {
+          slidesToShow: 3,
+          slidesToScroll: 1,
+          infinite: true,
+        }
+      }, {
+        breakpoint: 750,
+        settings: {
+          slidesToShow: 2,
+        }
+      }, {
+        breakpoint: bpMobile,
+        settings: {
+          slidesToShow: 1,
+          slidesToScroll: 1,
+          dots: false
+        }
+      }];
+
+      for (var i = 0; i < targets.length; i++) {
+        $(targets[i] + ' .fsElementSlideshow')
+          .slick('slickSetOption', 'responsive', bp, true);
+      }
+    },
+
+    accessibilityMenu: function() {
+
+      if (notDraftMode) {
+
+        $navMain.find('.fsNavLevel1').columns({
+          columns: 2
+        });
+
+        $navMain.find(".fsNavLevel1").accessibility_menu();
+
+
+        // $('.nav-hub').find('.fsNavLevel1').accessibility_menu();
+      }
+    },
+
+    googleTranslateAccessibility: function() {
+
+      var checkTranslate = setInterval(function() {
+        if ($("#google_translate_element select.goog-te-combo").length) {
+          clearInterval(checkTranslate);
+          if ((!$("#google_translate_element select.goog-te-combo").parent()[0].length && $("#google_translate_element select.goog-te-combo").parent()[0].tagName !== "LABEL") && (!$("#google_translate_element select.goog-te-combo").prev().length || $("#google_translate_element select.goog-te-combo").prev()[0].tagName !== "LABEL")) {
+            $("#google_translate_element select.goog-te-combo").before('<label for="select-translate">Translate Website</label>');
+            $("#google_translate_element select.goog-te-combo").attr("id", "select-translate");
+          }
+        }
+      }, 200);
+
+    },
+
+    imageModule: function() {
+
+      $('.img-module').each(function() {
+        $(this).find('img').prependTo(this);
+      });
+    },
+
+    calendarWrapper: function() {
+
+      if ($('.fsCalendarTools').length) {
+        $(document).ajaxComplete(function() {
+          $('.fsCalendar.fsList article').each(function() {
+            $(this).wrapInner('<div class="article-wrapper"></div>');
+          });
+        });
+      }
+
+      $('.fsCalendar.fsList article').each(function() {
+        $(this).wrapInner('<div class="article-wrapper"></div>');
+      });
+
+    },
+
+    newsArticles: function() {
+
+      $('.fsNews article > .fsDateTime').each(function() {
+        $(this).prepend('<span class="date-label">Posted: </div>');
+      });
+      $('.fsNews article').each(function() {
+        var dateTime = $(this).find('.fsDateTime');
+
+        dateTime.insertAfter($(this).find('.fsThumbnail'));
+
+      });
+      $('.fsNews article > .fsSummary').dotdotdot({
+        watch: 'window'
+      });
+    },
+
+    calloutLink: function() {
+
+      $('.callout-top').each(function() {
+        var link = $(this).find('.fsElementFooterContent > div > a').attr('href');
+        var name = $(this).find('.fsElementFooterContent > div > a').attr('data-page-name');
+
+        $(this).wrap('<a href="' + link + '" data-page-name="' + name + '" class="callout-wrapper" target="_blank"></a>');
+      });
+    },
+
+    mainMenu: function() {
+
+      if ($('.athletics').length) {
+        $navMain.find('.column-1 > li:not(:first-of-type)').find('.fsNavLevel2').columns({
+          columns: 2
+        });
+        $navMain.find('.column-2').find('.fsNavLevel2').columns({
+          columns: 2
+        });
+
+        $navMain.find('.fsNavLevel1 > li').each(function() {
+          if ($(this).find('.fsNavLevel2.column-2').length) {
+            return true;
+          } else {
+            $(this).find('.fsNavLevel2.column-1').addClass('single-column');
+          }
+        });
+
+        $navMain.find('.column-1 > li:not(:first-of-type) .fsNavPageInfo').each(function() {
+          $(this).children().not('.fsNavLevel2').wrapAll("<div class='menu-wrapper'></div>");
+        });
+        $navMain.find('.column-2 > li .fsNavPageInfo').each(function() {
+          $(this).children().not('.fsNavLevel2').wrapAll("<div class='menu-wrapper'></div>");
+        });
+      }
+
+      if (!$('.athletics').length) {
+        $navMain.find('.fsNavLevel2').columns({
+          columns: 2
+        });
+
+        $navMain.find('.fsNavPageInfo').each(function() {
+          $(this).children().not('.fsNavLevel2').wrapAll("<div class='menu-wrapper'></div>");
+        });
+      }
+
+    },
+
+    fixedNav: function() {
+
+      var $menuStick = $('.nav-main').offset().top;
+
+      $navMain.prepend('<span class="fixed-logo"><a href="/"></a></span');
+
+      function fixedHeader() {
+        if ($(window).width() > 999) {
+          if ($(window).scrollTop() >= $menuStick) {
+            $navMain.addClass('is-fixed');
+            $('.site-info-container').addClass('is-fixed');
+            if ($('#fsAccountBar').length) {
+              $navMain.addClass('fixed-account');
+            } else {
+              $navMain.removeClass('fixed-account');
+            }
+          } else {
+            $navMain.removeClass('is-fixed');
+            $('.site-info-container').removeClass('is-fixed');
+
+          }
+        } else {
+          $navMain.removeClass('is-fixed');
+          $('.site-info-container').removeClass('is-fixed');
+        }
+      }
+
+      $(window).on('load resize', function() {
+        if ($('body:not(.fsComposeMode)').length) {
+          var scroll = false;
+
+          $(window).scroll(function() {
+            scroll = true;
+          });
+
+          setInterval(function() {
+            if (scroll) {
+              scroll = false;
+
+              fixedHeader();
+
+            }
+          }, 100);
+        }
+      });
+    },
+
+    miscellaniousFunctions: function() {
+
+      //SmoothScrolling
+      $('.universal-slideshow footer a.smoothScroll, .resource-slider  footer a.smoothScroll').smoothScroll({
+        offset: -100
+      });
+
+      //Double Tap
+      $navMain.find(".fsNavLevel1 > li ").doubleTapToGo();
+
+      //Interior Hero
+      if (notComposeMode && $('.interior-hero').length) {
+        if($('.interior-hero.fsResourceElement').length) {
+          var myImg = $('.interior-hero.fsResourceElement img');
+          myImg.attr('src', getImageSize(myImg));
+        }
+        $('.interior-hero').appendTo('.fsHeader > .fsBanner');
+      }
+
+      //Breadcrumb Nav
+      $('.fsBreadcrumb').prependTo('.fsPageBodyWrapper');
+
+      //Feeds in Tabs
+      if (notComposeMode) {
+        FS.events.onElementShown('athletics-feeds panel', function($element) {
+          // console.log("lol");
+          Juicer.initialize();
+        });
+      }
+
+      //Fixed background fix for iOS
+      var iOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+
+      if (iOS) {
+        $('.footer-image').addClass('ios-fix');
+      }
+    },
+
+    quicklinks: function() {
+
+      $(window).on('load', function() {
+        $('.quicklinks').each(function() {
+          var linksWidth = -($(this).css('width').replace(/[^-\d\.]/g, ''));
+
+          $(this).css('left', linksWidth);
+        });
+      });
+
+
+
+      $('.quicklinks > header').on('click', function() {
+        $(this).parent().toggleClass('active');
+      });
+    },
+
+    announcement: function() {
+
+      if ($('.announcement').length && !$('.announcement').hasClass('hidden')) {
+        $('.announcement').before('<div class="announcement-tag">Announcement Open</div');
+      }
+
+      $('.announcement .close-btn').on('click', function() {
+        $('.announcement, .announcement-tag').addClass('hide-announcement');
+      });
+      $('.announcement-tag').on('click', function() {
+        $('.announcement, .announcement-tag').removeClass('hide-announcement');
+      });
+
+      $(window).on('load resize', function() {
+        if ($(window).width() < 999) {
+          $('.announcement, .announcement-tag').addClass('hide-announcement');
+        }
+      });
+
+      if ($('.announcement').length && $('.announcement').hasClass('begin-closed')) {
+        $('.announcement, .announcement-tag').addClass('hide-announcement');
+
+      }
+
+      /*if (isHome) {
+        $('.announcement, .announcement-tag').addClass('hide-announcement');
+      }*/
+
+
+    },
+
+    imageFlaot: function() {
+
+      var imgFloat = $('img[style*="float"]');
+
+      if (imgFloat.length) {
+        imgFloat.each(function() {
+          $(this).parent().addClass('image-clear');
+          // ("<div class='image-clear'></div>");
+        });
+      }
+    },
+
+    profileRandomizer: function() {
+
+      $('.profile').each(function() {
+
+        var profileArray = $(this).find('.fsListItems').children().toArray();
+        var profileShow = profileArray[Math.floor(Math.random() * profileArray.length)];
+
+        $(profileShow).addClass('show-profile');
+
+        $(this).find('article').each(function() {
+          $(this).children().not(':first-child').wrapAll("<div class='text-wrapper'></div>");
+        });
+      });
+
+    }
+
+  };
+
+  if (isDirectory) {
+    setTimeout(function() {
+      $('.fsConstituentItem').each(function() {
+        var title = $(this).find('.fsJobTitle');
+        title.insertAfter($(this).find('.fsDepartments'));
+      });
+    }, 200);
+  }
+
+  UTIL.init();
+
+}); //jQuery
+
+
+function getImageSize(e,t){if(0===e.length)return!1;var n,s=JSON.parse(unescape(e[0].getAttribute("data-image-sizes")));if("number"==typeof t)for(i=0;i<s.length;i++)void 0===n&&s[i].width>=t&&(n=s[i].url);return n?n:"small"===t?s[0].url:s[s.length-1].url}function backgroundImage(e){backgroundElement=e,$(backgroundElement).each(function(){var e=$(this).find("img").attr("src");$(this).css("background-image",'url("'+e+'")')})}function moveResourceImage(e,t){if(0===e.length||0===t.length)return!1;var n=$(e).eq(0),i=n.attr("data-image-sizes"),s=n.attr("data-aspect-ratio");$(t).eq(0).attr("data-image-sizes",i).attr("data-aspect-ratio",s),FS.util.updateDynamicImages($(t).eq(0))}function debounce(e,t,n){var i;return function(){var s=this,a=arguments,o=function(){i=null,n||e.apply(s,a)},r=n&&!i;clearTimeout(i),i=setTimeout(o,t),r&&e.apply(s,a)}}function placeholder(e,t){"use strict";var n,i,s=100,a=100;n=function o(){e.find("input.gsc-input").length?$.support.placeholder?e.find("input.gsc-input").attr("placeholder",t):e.find("input.gsc-input").attr("value",t):s>0&&(i=setTimeout(o,a),s-=1)},i=setTimeout(n,a)}function nano(e,t){return e.replace(/\{([\w\.]*)\}/g,function(e,n){for(var i=n.split("."),s=t[i.shift()],a=0,o=i.length;a<o;a++)s=s[i[a]];return"undefined"!=typeof s&&null!==s?s:""})}if($(".fsCalendar.fsGrid").length){$(".fsCalendar.fsGrid").addClass("smallCal");var eventview,scrollUp,onClickGridEvent=function(e){var t,n,i=$(e.target).closest(".fsCalendarDaybox");n=i.clone(),t=eventview.offset().top-16,$(".fsCalendarEventGrid .fsCalendarDaybox, .fsCalendarWeekendDayBox>div").removeClass("selected"),eventview.empty().append(n),i.addClass("selected"),$("html,body").animate({scrollTop:t},450)},onClickScrollUp=function(){var e=$(".fsCalendarMonthBrowser").offset().top-16;$("html,body").animate({scrollTop:e},450)},onAJAXSuccess=function(e,t,n,i){var s=$(i).hasClass("fsCalendar fsGrid");s&&initCalendar()},initCalendar=function(){eventview=$('<div id="event-view" />').insertAfter(".fsCalendarEventGrid"),scrollUp=$('<div class="scroll-up"><span>Back Up To Calendar</span></div>').insertAfter(eventview),scrollUp.on("click",onClickScrollUp),$(".fsCalendarDaybox").has(".fsCalendarInfo").addClass("has-info"),$(".fsCalendarEventGrid").on("click",".fsCalendarDaybox:not(.fsCalendarWeekendDayBox),.fsCalendarWeekendDayBox>div ",onClickGridEvent)};$(document).ajaxSuccess(onAJAXSuccess),initCalendar()}!function(e){"use strict";function t(t,n){var i=this;i.wrapper,i.numOfCol,i.menuTag,i.newCol,i.itemsPerColumn,i.element=e(t),i.defaults={columns:2,breakAt:0,itemsInColumn:!1,addWrapper:!1,wrapper:"<div class='col-wrap' />"},i.settings=e.extend({},i.defaults,n),i.init()}t.prototype={init:function(){var e=this;e.items=e.element.children(),e.classList=e.element.attr("class")?e.element.attr("class"):"",e.elementTag=e.element.prop("tagName").toLowerCase(),e.items.length<e.settings.breakAt||(e.columnPrep(),e.createColumns(),e.distributeItems())},columnPrep:function(){var t=this;t.element.addClass("menu-col column-1"),t.settings.addWrapper&&(t.wrapper=e(t.settings.wrapper),t.wrapper.insertBefore(t.element),t.element.appendTo(t.wrapper)),t.settings.itemsInColumn?t.itemsPerColumn=t.settings.columns:t.itemsPerColumn=Math.ceil(t.items.length/t.settings.columns),t.numOfCol=Math.ceil(t.items.length/t.itemsPerColumn)},createColumns:function(){for(var t=this,n=t.numOfCol;n>1;n--)t.newCol=e("<"+t.elementTag+">",{"class":t.classList+" menu-col column-"+n}),t.newCol.insertAfter(t.element)},distributeItems:function(){var t,n,i=this,s=1;e.each(i.items,function(a){a+1>i.itemsPerColumn&&(n=(a+1)%i.itemsPerColumn,(1==n||1==i.itemsPerColumn&&0==n)&&(s++,t=i.settings.addWrapper?i.wrapper.find(".column-"+s):i.element.siblings(".column-"+s)),e(this).appendTo(t))})}},e.fn.columns=function(e){this.each(function(){new t(this,e)})}}(jQuery),function(e,t,n,i){e.fn.doubleTapToGo=function(i){return!!("ontouchstart"in t||navigator.msMaxTouchPoints||navigator.userAgent.toLowerCase().match(/windows phone os 7/i))&&(this.each(function(){var t=!1;e(this).on("click",function(n){var i=e(this);i[0]!=t[0]&&(n.preventDefault(),t=i)}),e(n).on("click touchstart MSPointerDown",function(n){for(var i=!0,s=e(n.target).parents(),a=0;a<s.length;a++)s[a]==t[0]&&(i=!1);i&&(t=!1)})}),this)}}(jQuery,window,document),function(e,t,n){var i=window.matchMedia;"undefined"!=typeof module&&module.exports?module.exports=n(i):"function"==typeof define&&define.amd?define(function(){return t[e]=n(i)}):t[e]=n(i)}("enquire",this,function(e){"use strict";function t(e,t){var n,i=0,s=e.length;for(i;i<s&&(n=t(e[i],i),n!==!1);i++);}function n(e){return"[object Array]"===Object.prototype.toString.apply(e)}function i(e){return"function"==typeof e}function s(e){this.options=e,!e.deferSetup&&this.setup()}function a(t,n){this.query=t,this.isUnconditional=n,this.handlers=[],this.mql=e(t);var i=this;this.listener=function(e){i.mql=e,i.assess()},this.mql.addListener(this.listener)}function o(){if(!e)throw new Error("matchMedia not present, legacy browsers require a polyfill");this.queries={},this.browserIsIncapable=!e("only all").matches}return s.prototype={setup:function(){this.options.setup&&this.options.setup(),this.initialised=!0},on:function(){!this.initialised&&this.setup(),this.options.match&&this.options.match()},off:function(){this.options.unmatch&&this.options.unmatch()},destroy:function(){this.options.destroy?this.options.destroy():this.off()},equals:function(e){return this.options===e||this.options.match===e}},a.prototype={addHandler:function(e){var t=new s(e);this.handlers.push(t),this.matches()&&t.on()},removeHandler:function(e){var n=this.handlers;t(n,function(t,i){if(t.equals(e))return t.destroy(),!n.splice(i,1)})},matches:function(){return this.mql.matches||this.isUnconditional},clear:function(){t(this.handlers,function(e){e.destroy()}),this.mql.removeListener(this.listener),this.handlers.length=0},assess:function(){var e=this.matches()?"on":"off";t(this.handlers,function(t){t[e]()})}},o.prototype={register:function(e,s,o){var r=this.queries,l=o&&this.browserIsIncapable;return r[e]||(r[e]=new a(e,l)),i(s)&&(s={match:s}),n(s)||(s=[s]),t(s,function(t){i(t)&&(t={match:t}),r[e].addHandler(t)}),this},unregister:function(e,t){var n=this.queries[e];return n&&(t?n.removeHandler(t):(n.clear(),delete this.queries[e])),this}},new o}),function(e){e("#financial-aid-submit").click(function(){var t=!0;e("input[name=info]").each(function(n){isNaN(parseInt(e(this).val()))&&(t=!1)});var n=e("#Location").val();if(t){var i=0,s=parseInt(e("#OtherIncome").val()),a=parseInt(e("#ParentIncome").val()),o=parseInt(e("#FamilySize").val()),r=parseInt(e("#OtherAssets").val()),l=parseInt(e("#HomeEquity").val()),c=parseInt(e("#ChildNum").val()),d=parseInt(e("#ChargingSchoolKids").val());0==c&&(c=1),0==d&&(d=1),i=a-.3*a+s,i-=7==n?o>6?6e4:1e4*o:a<=15e4?1e4*o*1.6:a<=3e5?1e4*o*1.7:1e4*o*1.5,r+l>=1e5&&r+l<=4e5?i+=.05*r+.03*l:r+l<=8e5?i+=.1*(r+l):r+l>8e5&&(i+=.15*(r+l)),i>1e5?parentContribution=.3*i/d:parentContribution=.25*i/d,parentContribution<0&&(parentContribution=0),parentContribution=parentContribution.toFixed(2).toString().replace(/\B(?=(\d{3})+(?!\d))/g,","),e("#ParentContribution").html("Parent Contribution: $ "+parentContribution)}else e("#ParentContribution").html("Parent Contribution: $ "),alert("Please enter numeric values for all fields.")})}(jQuery),function(e){function t(e){var t=e.createElement("script"),n=e.scripts[0];t.src="https://ajax.googleapis.com/ajax/libs/webfont/1.6.26/webfont.js",t.async=!0,n.parentNode.insertBefore(t,n)}t(e);var n,i=e.getElementsByClassName("fsForm");if(i.length)for(var s=0;s<i.length;s++)n=i[s].getElementsByTagName("iframe")[0],n.onload=function(){this.contentWindow.WebFontConfig=window.WebFontConfig,t(this.contentDocument)}}(document),$.fn.fsFeedPull=function(e,t){targetClass=this;var n=$(targetClass),i=n.attr("data-feed-url"),s={per:e,page:1},a=$.extend({feedTemplate:""},t),o={slide:a.feedTemplate.join("\n")};$.getJSON(i,s,function(e){$.each(e.posts.items,function(t,i){n.find(">.fsElementContent").append(nano(o.slide,{imgSrc:e.posts.items[t].image,likeCount:e.posts.items[t].like_count,feedDesc:e.posts.items[t].unformatted_message,posterImage:e.posts.items[t].poster_image,posterName:e.posts.items[t].poster_name,postUrl:e.posts.items[t].full_url}))})}).done(function(){t.callback()}).fail(function(){n.append("<span>you fail</span>").css("textAlign","center")})},function(e){"use strict";function t(t,n){var i=this,s={mediaTemplate:['<article class="universal-slide">','<img src="{imgSrc}" alt="{captionTitle}" class="universal-img" />','<div class="caption-wrapper">','<div class="caption-title">{captionTitle}</div>','<div class="caption-desc">{captionDesc}</div>',"</div>","</article>"],bp:600,callback:null,url:null};i.element=t,i.container=t,i.settings=e.extend(!0,{},s,n),i.url="",i.init()}function n(e){var t=document.createElement("div");return t.innerHTML=e,t.childNodes[0]}t.prototype={init:function(){var e=this;e.element.classList.contains("fsMedia")?(e.container=e.element.getElementsByClassName("fsMediaCustomPlayer")[0],e.url=e.container.getAttribute("data-playlisturl")):e.settings.url&&(e.url=e.settings.url),e.html=Array.isArray(e.settings.mediaTemplate)?e.settings.mediaTemplate.join("\n"):e.settings.mediaTemplate,e.getContent()},getContent:function(){var t=this;e.getJSON(t.url).done(function(e){for(var i=e.objects,s=0;s<i.length;s++){var a=n(nano(t.html,{imgSrc:window.innerWidth>t.settings.bp?i[s].full_path:i[s].mobile_path,captionTitle:i[s].object_title,captionDesc:i[s].object_description}));0==a.textContent.trim().length&&a.getElementsByClassName("caption-wrapper").length&&a.getElementsByClassName("caption-wrapper")[0].classList.add("is-empty"),t.container.appendChild(a)}t.callback()})},callback:function(){var e=this;"function"==typeof e.settings.callback&&e.settings.callback.call()}},e.fn.mediaPull=function(e){this.each(function(){new t(this,e)})}}(jQuery),function(e){"use strict";function t(t,n){var i,s=this;s.element=t,s.isMedia=!1,s.html="",i={slidesToShow:1,accessibility:!0,dots:!0,arrows:!0,infinite:!0,autoplay:!1,pauseOnHover:!1,adaptiveHeight:!0},s.defaults={mediaTemplate:['<article class="universal-slide">','<img src="{imgSrc}" alt="{captionTitle}" class="universal-img" />','<div class="caption-wrapper">','<div class="caption-title">{captionTitle}</div>','<div class="caption-desc">{captionDesc}</div>',"</div>","</article>"],slick:i,bp:600,preSlickCallback:null,callback:null},s.settings=e.extend(!0,{},s.defaults,n),s.init()}function n(e){var t=document.createElement("div");return t.innerHTML=e,t.childNodes[0]}function i(t){t.classList.toggle("slider-playing"),t.classList.toggle("slider-paused"),t.classList.contains("slider-playing")?e(t).slick("slickPlay"):e(t).slick("slickPause")}t.prototype={init:function(){var t=this;t.element.classList.contains("fsMedia")?t.isMedia=!0:t.element.classList.contains("fsMediaCustomPlayer")&&(t.element=e(t.element).parents(".fsMedia")[0],t.isMedia=!0),t.slider=t.isMedia?t.element.getElementsByClassName("fsMediaCustomPlayer")[0]:t.element,t.slider.classList.add("fsCustomSlider"),t.html=Array.isArray(t.settings.mediaTemplate)?t.settings.mediaTemplate.join("\n"):t.settings.mediaTemplate,t.isMedia?t.sliderPrep():document.body.classList.contains("fsDraftMode")||t.slickInit()},sliderPrep:function(){var t=this;e(t.element).mediaPull({mediaTemplate:t.settings.mediaTemplate,bp:t.settings.bp,callback:function(){t.slickInit()}})},slickInit:function(){var t=this,s=e(t.slider);s.on("init",function(e,s){var a=n("<button class='slider-play-btn'>Play</button>");a.addEventListener("click",function(){i(t.slider)}),t.slider.insertBefore(a,t.slider.firstChild),s.options.autoplay?t.slider.classList.add("slider-playing"):t.slider.classList.add("slider-paused"),"function"==typeof t.settings.callback&&t.settings.callback.call(t,t.element)}),"function"==typeof t.settings.preSlickCallback&&t.settings.preSlickCallback.call(t,t.element),s.slick(t.settings.slick)}},e.fn.mediaSlider=function(e){this.each(function(){new t(this,e)})}}(jQuery),function(e,t){function n(e,t,n){var i=e.children(),s=!1;e.empty();for(var o=0,r=i.length;o<r;o++){var l=i.eq(o);if(e.append(l),n&&e.append(n),a(e,t)){l.remove(),s=!0;break}n&&n.detach()}return s}function i(t,n,o,r,l){var c=!1,d="a, table, thead, tbody, tfoot, tr, col, colgroup, object, embed, param, ol, ul, dl, blockquote, select, optgroup, option, textarea, script, style",f="script, .dotdotdot-keep";return t.contents().detach().each(function(){var u=this,p=e(u);if("undefined"==typeof u)return!0;if(p.is(f))t.append(p);else{if(c)return!0;t.append(p),!l||p.is(r.after)||p.find(r.after).length||t[t.is(d)?"after":"append"](l),a(o,r)&&(c=3==u.nodeType?s(p,n,o,r,l):i(p,n,o,r,l)),c||l&&l.detach()}}),n.addClass("is-truncated"),c}function s(t,n,i,s,r){var d=t[0];if(!d)return!1;var u=c(d),p=u.indexOf(" ")!==-1?" ":"　",h="letter"==s.wrap?"":p,m=u.split(h),g=-1,v=-1,b=0,y=m.length-1;for(s.fallbackToLetter&&0==b&&0==y&&(h="",m=u.split(h),y=m.length-1);b<=y&&(0!=b||0!=y);){var C=Math.floor((b+y)/2);if(C==v)break;v=C,l(d,m.slice(0,v+1).join(h)+s.ellipsis),i.children().each(function(){e(this).toggle().toggle()}),a(i,s)?(y=v,s.fallbackToLetter&&0==b&&0==y&&(h="",m=m[0].split(h),g=-1,v=-1,b=0,y=m.length-1)):(g=v,b=v)}if(g==-1||1==m.length&&0==m[0].length){var w=t.parent();t.detach();var k=r&&r.closest(w).length?r.length:0;if(w.contents().length>k?d=f(w.contents().eq(-1-k),n):(d=f(w,n,!0),k||w.detach()),d&&(u=o(c(d),s),l(d,u),k&&r)){var x=r.parent();e(d).parent().append(r),e.trim(x.html())||x.remove()}}else u=o(m.slice(0,g+1).join(h),s),l(d,u);return!0}function a(e,t){return e.innerHeight()>t.maxHeight}function o(t,n){for(;e.inArray(t.slice(-1),n.lastCharacter.remove)>-1;)t=t.slice(0,-1);return e.inArray(t.slice(-1),n.lastCharacter.noEllipsis)<0&&(t+=n.ellipsis),t}function r(e){return{width:e.innerWidth(),height:e.innerHeight()}}function l(e,t){e.innerText?e.innerText=t:e.nodeValue?e.nodeValue=t:e.textContent&&(e.textContent=t)}function c(e){return e.innerText?e.innerText:e.nodeValue?e.nodeValue:e.textContent?e.textContent:""}function d(e){do e=e.previousSibling;while(e&&1!==e.nodeType&&3!==e.nodeType);return e}function f(t,n,i){var s,a=t&&t[0];if(a){if(!i){if(3===a.nodeType)return a;if(e.trim(t.text()))return f(t.contents().last(),n)}for(s=d(a);!s;){if(t=t.parent(),t.is(n)||!t.length)return!1;s=d(t[0])}if(s)return f(e(s),n)}return!1}function u(t,n){return!!t&&("string"==typeof t?(t=e(t,n),!!t.length&&t):!!t.jquery&&t)}function p(e){for(var t=e.innerHeight(),n=["paddingTop","paddingBottom"],i=0,s=n.length;i<s;i++){var a=parseInt(e.css(n[i]),10);isNaN(a)&&(a=0),t-=a}return t}if(!e.fn.dotdotdot){e.fn.dotdotdot=function(t){if(0==this.length)return e.fn.dotdotdot.debug('No element found for "'+this.selector+'".'),this;if(this.length>1)return this.each(function(){e(this).dotdotdot(t)});var s=this,o=s.contents();s.data("dotdotdot")&&s.trigger("destroy.dot"),s.data("dotdotdot-style",s.attr("style")||""),s.css("word-wrap","break-word"),"nowrap"===s.css("white-space")&&s.css("white-space","normal"),s.bind_events=function(){return s.bind("update.dot",function(t,r){switch(s.removeClass("is-truncated"),t.preventDefault(),t.stopPropagation(),typeof l.height){case"number":l.maxHeight=l.height;break;case"function":l.maxHeight=l.height.call(s[0]);break;default:l.maxHeight=p(s)}l.maxHeight+=l.tolerance,"undefined"!=typeof r&&(("string"==typeof r||"nodeType"in r&&1===r.nodeType)&&(r=e("<div />").append(r).contents()),r instanceof e&&(o=r)),m=s.wrapInner('<div class="dotdotdot" />').children(),m.contents().detach().end().append(o.clone(!0)).find("br").replaceWith("  <br />  ").end().css({height:"auto",width:"auto",border:"none",padding:0,margin:0});var d=!1,f=!1;return c.afterElement&&(d=c.afterElement.clone(!0),d.show(),c.afterElement.detach()),a(m,l)&&(f="children"==l.wrap?n(m,l,d):i(m,s,m,l,d)),m.replaceWith(m.contents()),m=null,e.isFunction(l.callback)&&l.callback.call(s[0],f,o),c.isTruncated=f,f}).bind("isTruncated.dot",function(e,t){return e.preventDefault(),e.stopPropagation(),"function"==typeof t&&t.call(s[0],c.isTruncated),c.isTruncated}).bind("originalContent.dot",function(e,t){return e.preventDefault(),e.stopPropagation(),"function"==typeof t&&t.call(s[0],o),o}).bind("destroy.dot",function(e){e.preventDefault(),e.stopPropagation(),s.unwatch().unbind_events().contents().detach().end().append(o).attr("style",s.data("dotdotdot-style")||"").removeClass("is-truncated").data("dotdotdot",!1)}),s},s.unbind_events=function(){return s.unbind(".dot"),s},s.watch=function(){if(s.unwatch(),"window"==l.watch){var t=e(window),n=t.width(),i=t.height();t.bind("resize.dot"+c.dotId,function(){n==t.width()&&i==t.height()&&l.windowResizeFix||(n=t.width(),i=t.height(),f&&clearInterval(f),f=setTimeout(function(){s.trigger("update.dot")},100))})}else d=r(s),f=setInterval(function(){if(s.is(":visible")){var e=r(s);d.width==e.width&&d.height==e.height||(s.trigger("update.dot"),d=e)}},500);return s},s.unwatch=function(){return e(window).unbind("resize.dot"+c.dotId),f&&clearInterval(f),s};var l=e.extend(!0,{},e.fn.dotdotdot.defaults,t),c={},d={},f=null,m=null;return l.lastCharacter.remove instanceof Array||(l.lastCharacter.remove=e.fn.dotdotdot.defaultArrays.lastCharacter.remove),l.lastCharacter.noEllipsis instanceof Array||(l.lastCharacter.noEllipsis=e.fn.dotdotdot.defaultArrays.lastCharacter.noEllipsis),c.afterElement=u(l.after,s),c.isTruncated=!1,c.dotId=h++,s.data("dotdotdot",!0).bind_events().trigger("update.dot"),l.watch&&s.watch(),s},e.fn.dotdotdot.defaults={ellipsis:"... ",wrap:"word",fallbackToLetter:!0,lastCharacter:{},tolerance:0,callback:null,after:null,height:null,watch:!1,windowResizeFix:!0},e.fn.dotdotdot.defaultArrays={lastCharacter:{remove:[" ","　",",",";",".","!","?"],noEllipsis:[]}},e.fn.dotdotdot.debug=function(e){};var h=1,m=e.fn.html;e.fn.html=function(n){return n!=t&&!e.isFunction(n)&&this.data("dotdotdot")?this.trigger("update",[n]):m.apply(this,arguments)};var g=e.fn.text;e.fn.text=function(n){return n!=t&&!e.isFunction(n)&&this.data("dotdotdot")?(n=e("<div />").text(n).html(),this.trigger("update",[n])):g.apply(this,arguments)}}}(jQuery),jQuery(document).ready(function(e){e(".dot-ellipsis").each(function(){var t=e(this).hasClass("dot-resize-update"),n=e(this).hasClass("dot-timer-update"),i=0,s=e(this).attr("class").split(/\s+/);e.each(s,function(e,t){var n=t.match(/^dot-height-(\d+)$/);null!==n&&(i=Number(n[1]))});var a=new Object;n&&(a.watch=!0),t&&(a.watch="window"),i>0&&(a.height=i),e(this).dotdotdot(a)})}),jQuery(window).on("load",function(){jQuery(".dot-ellipsis.dot-load-update").trigger("update.dot")}),function(e){function t(e){return e.replace(/(:|\.)/g,"\\$1")}var n="1.5.2",i={},s={exclude:[],excludeWithin:[],offset:0,direction:"top",scrollElement:null,scrollTarget:null,beforeScroll:function(){},afterScroll:function(){},easing:"swing",speed:600,autoCoefficient:2,preventDefault:!0},a=function(t){var n=[],i=!1,s=t.dir&&"left"===t.dir?"scrollLeft":"scrollTop";return this.each(function(){if(this!==document&&this!==window){var t=e(this);t[s]()>0?n.push(this):(t[s](1),i=t[s]()>0,i&&n.push(this),t[s](0))}}),n.length||this.each(function(){"BODY"===this.nodeName&&(n=[this])}),"first"===t.el&&n.length>1&&(n=[n[0]]),n};e.fn.extend({scrollable:function(e){var t=a.call(this,{dir:e});return this.pushStack(t)},firstScrollable:function(e){var t=a.call(this,{el:"first",dir:e});return this.pushStack(t)},smoothScroll:function(n,i){if(n=n||{},"options"===n)return i?this.each(function(){var t=e(this),n=e.extend(t.data("ssOpts")||{},i);e(this).data("ssOpts",n)}):this.first().data("ssOpts");var s=e.extend({},e.fn.smoothScroll.defaults,n),a=e.smoothScroll.filterPath(location.pathname);return this.unbind("click.smoothscroll").bind("click.smoothscroll",function(n){var i=this,o=e(this),r=e.extend({},s,o.data("ssOpts")||{}),l=s.exclude,c=r.excludeWithin,d=0,f=0,u=!0,p={},h=location.hostname===i.hostname||!i.hostname,m=r.scrollTarget||e.smoothScroll.filterPath(i.pathname)===a,g=t(i.hash);if(r.scrollTarget||h&&m&&g){for(;u&&d<l.length;)o.is(t(l[d++]))&&(u=!1);for(;u&&f<c.length;)o.closest(c[f++]).length&&(u=!1)}else u=!1;u&&(r.preventDefault&&n.preventDefault(),e.extend(p,r,{scrollTarget:r.scrollTarget||g,link:i}),e.smoothScroll(p))}),this}}),e.smoothScroll=function(t,n){if("options"===t&&"object"==typeof n)return e.extend(i,n);var s,a,o,r,l,c=0,d="offset",f="scrollTop",u={},p={};"number"==typeof t?(s=e.extend({link:null},e.fn.smoothScroll.defaults,i),o=t):(s=e.extend({link:null},e.fn.smoothScroll.defaults,t||{},i),s.scrollElement&&(d="position","static"===s.scrollElement.css("position")&&s.scrollElement.css("position","relative"))),f="left"===s.direction?"scrollLeft":f,s.scrollElement?(a=s.scrollElement,/^(?:HTML|BODY)$/.test(a[0].nodeName)||(c=a[f]())):a=e("html, body").firstScrollable(s.direction),s.beforeScroll.call(a,s),o="number"==typeof t?t:n||e(s.scrollTarget)[d]()&&e(s.scrollTarget)[d]()[s.direction]||0,u[f]=o+c+s.offset,r=s.speed,"auto"===r&&(l=u[f]-a.scrollTop(),l<0&&(l*=-1),r=l/s.autoCoefficient),p={duration:r,easing:s.easing,complete:function(){s.afterScroll.call(s.link,s)}},s.step&&(p.step=s.step),a.length?a.stop().animate(u,p):s.afterScroll.call(s.link,s)},e.smoothScroll.version=n,e.smoothScroll.filterPath=function(e){return e=e||"",e.replace(/^\//,"").replace(/(?:index|default).[a-zA-Z]{3,4}$/,"").replace(/\/$/,"")},e.fn.smoothScroll.defaults=s}(jQuery),function(e){"use strict";var t={48:"0",49:"1",50:"2",51:"3",52:"4",53:"5",54:"6",55:"7",56:"8",57:"9",59:";",65:"a",66:"b",67:"c",68:"d",69:"e",70:"f",71:"g",72:"h",73:"i",74:"j",75:"k",76:"l",77:"m",78:"n",79:"o",80:"p",81:"q",82:"r",83:"s",84:"t",85:"u",86:"v",87:"w",88:"x",89:"y",90:"z",96:"0",97:"1",98:"2",99:"3",100:"4",101:"5",102:"6",103:"7",104:"8",105:"9"};e.fn.accessibility_menu=function(n){var i=e.extend({menuClass:"menu-item-open",mainMenuLabel:"Main Menu",mainMenuRole:"navigation",topMenuRole:"menubar",listItemsRole:"menuitem",subNavRole:"menu",firstTab:"level2"},n),s=e(this),a=".fsNavPageInfo",o=".fsNavLevel1",r=".fsNavLevel2",l=".fsNavPageDescription",c=s.find("> li > a");e(this).parent().attr("role",i.mainMenuRole).attr("aria-label",i.mainMenuLabel),e(this).attr("role",i.topMenuRole).find("li").attr("role",i.listItemsRole),e(this).find(r).attr("role",i.subNavRole),e(this).find(a).find("a").attr("tabIndex",-1),e(c).each(function(){e(this).next(a).length>0&&e(this).parent("li").attr("aria-haspopup","true").find(a).attr("aria-hidden","true")}),e(c).bind("focus mouseenter mouseleave",function(){var t=new Array;if(e(this).parents(o).find("> li > a").removeAttr("tabindex"),e(this).parents(o).find("."+i.menuClass).removeClass(i.menuClass).find(a).attr("aria-hidden","true").find("a").attr("tabindex",-1),e(this).next(a).attr("aria-hidden","false").parent("li").addClass(i.menuClass),t.push(e(this)[0]),"level2"==i.firstTab){if(e(this).next(a).find(r).find("a").length)for(var n=0;n<e(this).next(a).find(r).find("a").length;n++)t.push(e(this).next(a).find(r).find("a")[n]);if(e(this).next(a).find(l).find("a").length)for(var s=0;s<e(this).next(a).find(l).find("a").length;s++)t.push(e(this).next(a).find(l).find("a")[s])}else if("pagedesc"==i.firstTab){if(e(this).next(a).find(l).find("a").length)for(var c=0;c<e(this).next(a).find(l).find("a").length;c++)t.push(e(this).next(a).find(l).find("a")[c]);if(e(this).next(a).find(r).find("a").length)for(var d=0;d<e(this).next(a).find(r).find("a").length;d++)t.push(e(this).next(a).find(r).find("a")[d])}for(var f=0;f<t.length;f++)t[f].setAttribute("tabindex",f)}),e(this).on("mouseleave",function(){e(this).find("> li > a").removeAttr("tabindex"),e(this).find("."+i.menuClass).removeClass(i.menuClass).find(a).attr("aria-hidden","true").find("a").attr("tabIndex",-1)}),e(c).keydown(function(n){var s=e(this).parent("li").find(a).find("a").length;38==n.keyCode?(n.preventDefault(),e(this).parent("li").find(a).find("a").length&&e(this).parent("li").find(a).find("a[tabindex="+s+"]").focus()):39==n.keyCode?(n.preventDefault(),0==e(this).parent("li").next("li").length?e(this).parents(o).find("> li").first().find("a").first().focus():e(this).parent("li").next("li").find("a").first().focus()):40==n.keyCode?e(this).parent("li").find(a).find("a").length&&(n.preventDefault(),e(this).parent("li").addClass(i.menuClass).find(a).attr("aria-hidden","false"),e(this).parent("li").find("a[tabindex=1]").focus()):37==n.keyCode?(n.preventDefault(),0==e(this).parent("li").prev("li").length?e(this).parents(o).find("> li").last().find("a").first().focus():e(this).parent("li").prev("li").find("a").first().focus()):9==n.keyCode?e(this).parent("li").find(a).find("a").length&&(n.preventDefault(),e(this).parent("li").addClass(i.menuClass).find(a).attr("aria-hidden","false"),e(this).parent("li").find("a[tabindex=1]").focus()):32==n.keyCode?(n.preventDefault(),window.location=e(this).attr("href")):27==n.keyCode?(n.preventDefault(),e("."+i.menuClass).removeClass(i.menuClass).find("> a").removeAttr("tabindex").parent("li").find(a).attr("aria-hidden","true").find("a").attr("tabIndex",-1)):e(this).parent("li").find(a+"[aria-hidden=false] a").each(function(){if(e(this).text().substring(0,1).toLowerCase()==t[n.keyCode])return e(this).focus(),!1})});var d=e(this).find(a).find("a");e(d).keydown(function(n){var s=e(this).parents(a).find("a").length,r=parseInt(e(this).attr("tabindex"));if(38==n.keyCode)n.preventDefault(),1==r?e(this).parents(a).parent("li").find("a").first().focus():e(this).parents(a).find("a[tabindex="+(r-1)+"]").focus();else if(39==n.keyCode)n.preventDefault(),0==e(this).parents(a).parent("li").next("li").length?e(this).parents(o).find("> li").first().find("a").first().focus():e(this).parents(a).parent("li").next("li").find("a").first().focus();else if(40==n.keyCode)n.preventDefault(),r==s?e(this).parents(a).parent("li").find("a").first().focus():e(this).parents(a).find("a[tabindex="+(r+1)+"]").focus();else if(27==n.keyCode||37==n.keyCode)n.preventDefault(),e(this).parents(a).parent("li").find("> a").focus(),e("."+i.menuClass).removeClass(i.menuClass).find(a).attr("aria-hidden","true");else if(9==n.keyCode)r==s?e(this).parents(a).parent("li").next("li").length?(n.preventDefault(),e(this).parents(a).parent("li").next("li").find("a").first().focus()):(e(this).parents(o).find("> li > a").removeAttr("tabindex"),e("."+i.menuClass).removeClass(i.menuClass).find(a).attr("aria-hidden","true").find("a").attr("tabIndex",-1)):(n.preventDefault(),e(this).parents(a).find("a[tabindex="+(r+1)+"]").focus());else if(32==n.keyCode)n.preventDefault(),window.location=e(this).attr("href");else{var l=!1;e(this).parent("li").nextAll("li").find("a").each(function(){if(e(this).text().substring(0,1).toLowerCase()==t[n.keyCode])return e(this).focus(),l=!0,!1}),l||e(this).parent("li").prevAll("li").find("a").each(function(){if(e(this).text().substring(0,1).toLowerCase()==t[n.keyCode])return e(this).focus(),!1})}}),e(document).click(function(){e(this).parents(o).find("> li > a").removeAttr("tabindex"),e("."+i.menuClass).removeClass(i.menuClass).find(a).attr("aria-hidden","true").find("a").attr("tabIndex",-1)}),e(this).click(function(e){e.stopPropagation()})}}(jQuery),window.Modernizr=function(e,t,n){function i(e){b.cssText=e}function s(e,t){return typeof e===t}function a(e,t){return!!~(""+e).indexOf(t)}function o(e,t){for(var i in e){var s=e[i];if(!a(s,"-")&&b[s]!==n)return"pfx"!=t||s}return!1}function r(e,t,i){for(var a in e){var o=t[e[a]];if(o!==n)return i===!1?e[a]:s(o,"function")?o.bind(i||t):o}return!1}function l(e,t,n){var i=e.charAt(0).toUpperCase()+e.slice(1),a=(e+" "+k.join(i+" ")+i).split(" ");return s(t,"string")||s(t,"undefined")?o(a,t):(a=(e+" "+x.join(i+" ")+i).split(" "),r(a,t,n))}var c,d,f,u="2.8.3",p={},h=!0,m=t.documentElement,g="modernizr",v=t.createElement(g),b=v.style,y={}.toString,C=" -webkit- -moz- -o- -ms- ".split(" "),w="Webkit Moz O ms",k=w.split(" "),x=w.toLowerCase().split(" "),S={svg:"http://www.w3.org/2000/svg"},T={},P=[],E=P.slice,M=function(e,n,i,s){var a,o,r,l,c=t.createElement("div"),d=t.body,f=d||t.createElement("body");if(parseInt(i,10))for(;i--;)r=t.createElement("div"),r.id=s?s[i]:g+(i+1),c.appendChild(r);return a=["&#173;",'<style id="s',g,'">',e,"</style>"].join(""),c.id=g,(d?c:f).innerHTML+=a,f.appendChild(c),d||(f.style.background="",f.style.overflow="hidden",l=m.style.overflow,m.style.overflow="hidden",m.appendChild(f)),o=n(c,e),d?c.parentNode.removeChild(c):(f.parentNode.removeChild(f),m.style.overflow=l),!!o},_=function(t){var n=e.matchMedia||e.msMatchMedia;if(n)return n(t)&&n(t).matches||!1;var i;return M("@media "+t+" { #"+g+" { position: absolute; } }",function(t){i="absolute"==(e.getComputedStyle?getComputedStyle(t,null):t.currentStyle).position}),i},A={}.hasOwnProperty;f=s(A,"undefined")||s(A.call,"undefined")?function(e,t){return t in e&&s(e.constructor.prototype[t],"undefined")}:function(e,t){return A.call(e,t)},Function.prototype.bind||(Function.prototype.bind=function(e){var t=this;if("function"!=typeof t)throw new TypeError;var n=E.call(arguments,1),i=function(){if(this instanceof i){var s=function(){};s.prototype=t.prototype;var a=new s,o=t.apply(a,n.concat(E.call(arguments)));return Object(o)===o?o:a}return t.apply(e,n.concat(E.call(arguments)))};return i}),T.flexbox=function(){return l("flexWrap")},T.flexboxlegacy=function(){return l("boxDirection")},T.touch=function(){var n;return"ontouchstart"in e||e.DocumentTouch&&t instanceof DocumentTouch?n=!0:M(["@media (",C.join("touch-enabled),("),g,")","{#modernizr{top:9px;position:absolute}}"].join(""),function(e){n=9===e.offsetTop}),n},T.cssanimations=function(){return l("animationName")},T.csscolumns=function(){return l("columnCount")},T.csstransforms=function(){return!!l("transform")},T.csstransforms3d=function(){var e=!!l("perspective");return e&&"webkitPerspective"in m.style&&M("@media (transform-3d),(-webkit-transform-3d){#modernizr{left:9px;position:absolute;height:3px;}}",function(t,n){e=9===t.offsetLeft&&3===t.offsetHeight}),e},T.csstransitions=function(){return l("transition")},T.video=function(){var e=t.createElement("video"),n=!1;try{(n=!!e.canPlayType)&&(n=new Boolean(n),n.ogg=e.canPlayType('video/ogg; codecs="theora"').replace(/^no$/,""),n.h264=e.canPlayType('video/mp4; codecs="avc1.42E01E"').replace(/^no$/,""),n.webm=e.canPlayType('video/webm; codecs="vp8, vorbis"').replace(/^no$/,""))}catch(i){}return n},T.audio=function(){var e=t.createElement("audio"),n=!1;try{(n=!!e.canPlayType)&&(n=new Boolean(n),n.ogg=e.canPlayType('audio/ogg; codecs="vorbis"').replace(/^no$/,""),n.mp3=e.canPlayType("audio/mpeg;").replace(/^no$/,""),n.wav=e.canPlayType('audio/wav; codecs="1"').replace(/^no$/,""),n.m4a=(e.canPlayType("audio/x-m4a;")||e.canPlayType("audio/aac;")).replace(/^no$/,""))}catch(i){}return n},T.svg=function(){return!!t.createElementNS&&!!t.createElementNS(S.svg,"svg").createSVGRect},T.inlinesvg=function(){var e=t.createElement("div");return e.innerHTML="<svg/>",(e.firstChild&&e.firstChild.namespaceURI)==S.svg},T.svgclippaths=function(){return!!t.createElementNS&&/SVGClipPath/.test(y.call(t.createElementNS(S.svg,"clipPath")))};for(var j in T)f(T,j)&&(d=j.toLowerCase(),p[d]=T[j](),P.push((p[d]?"":"no-")+d));return p.addTest=function(e,t){if("object"==typeof e)for(var i in e)f(e,i)&&p.addTest(i,e[i]);else{if(e=e.toLowerCase(),p[e]!==n)return p;t="function"==typeof t?t():t,"undefined"!=typeof h&&h&&(m.className+=" "+(t?"":"no-")+e),p[e]=t}return p},i(""),v=c=null,function(e,t){function n(e,t){var n=e.createElement("p"),i=e.getElementsByTagName("head")[0]||e.documentElement;return n.innerHTML="x<style>"+t+"</style>",i.insertBefore(n.lastChild,i.firstChild)}function i(){var e=b.elements;return"string"==typeof e?e.split(" "):e}function s(e){var t=v[e[m]];return t||(t={},g++,e[m]=g,v[g]=t),t}function a(e,n,i){if(n||(n=t),d)return n.createElement(e);i||(i=s(n));var a;return a=i.cache[e]?i.cache[e].cloneNode():h.test(e)?(i.cache[e]=i.createElem(e)).cloneNode():i.createElem(e),
+!a.canHaveChildren||p.test(e)||a.tagUrn?a:i.frag.appendChild(a)}function o(e,n){if(e||(e=t),d)return e.createDocumentFragment();n=n||s(e);for(var a=n.frag.cloneNode(),o=0,r=i(),l=r.length;o<l;o++)a.createElement(r[o]);return a}function r(e,t){t.cache||(t.cache={},t.createElem=e.createElement,t.createFrag=e.createDocumentFragment,t.frag=t.createFrag()),e.createElement=function(n){return b.shivMethods?a(n,e,t):t.createElem(n)},e.createDocumentFragment=Function("h,f","return function(){var n=f.cloneNode(),c=n.createElement;h.shivMethods&&("+i().join().replace(/[\w\-]+/g,function(e){return t.createElem(e),t.frag.createElement(e),'c("'+e+'")'})+");return n}")(b,t.frag)}function l(e){e||(e=t);var i=s(e);return b.shivCSS&&!c&&!i.hasCSS&&(i.hasCSS=!!n(e,"article,aside,dialog,figcaption,figure,footer,header,hgroup,main,nav,section{display:block}mark{background:#FF0;color:#000}template{display:none}")),d||r(e,i),e}var c,d,f="3.7.0",u=e.html5||{},p=/^<|^(?:button|map|select|textarea|object|iframe|option|optgroup)$/i,h=/^(?:a|b|code|div|fieldset|h1|h2|h3|h4|h5|h6|i|label|li|ol|p|q|span|strong|style|table|tbody|td|th|tr|ul)$/i,m="_html5shiv",g=0,v={};!function(){try{var e=t.createElement("a");e.innerHTML="<xyz></xyz>",c="hidden"in e,d=1==e.childNodes.length||function(){t.createElement("a");var e=t.createDocumentFragment();return"undefined"==typeof e.cloneNode||"undefined"==typeof e.createDocumentFragment||"undefined"==typeof e.createElement}()}catch(n){c=!0,d=!0}}();var b={elements:u.elements||"abbr article aside audio bdi canvas data datalist details dialog figcaption figure footer header hgroup main mark meter nav output progress section summary template time video",version:f,shivCSS:u.shivCSS!==!1,supportsUnknownElements:d,shivMethods:u.shivMethods!==!1,type:"default",shivDocument:l,createElement:a,createDocumentFragment:o};e.html5=b,l(t)}(this,t),p._version=u,p._prefixes=C,p._domPrefixes=x,p._cssomPrefixes=k,p.mq=_,p.testProp=function(e){return o([e])},p.testAllProps=l,p.testStyles=M,m.className=m.className.replace(/(^|\s)no-js(\s|$)/,"$1$2")+(h?" js "+P.join(" "):""),p}(this,this.document),function(e,t,n){function i(e){return"[object Function]"==g.call(e)}function s(e){return"string"==typeof e}function a(){}function o(e){return!e||"loaded"==e||"complete"==e||"uninitialized"==e}function r(){var e=v.shift();b=1,e?e.t?h(function(){("c"==e.t?u.injectCss:u.injectJs)(e.s,0,e.a,e.x,e.e,1)},0):(e(),r()):b=0}function l(e,n,i,s,a,l,c){function d(t){if(!p&&o(f.readyState)&&(y.r=p=1,!b&&r(),f.onload=f.onreadystatechange=null,t)){"img"!=e&&h(function(){w.removeChild(f)},50);for(var i in P[n])P[n].hasOwnProperty(i)&&P[n][i].onload()}}var c=c||u.errorTimeout,f=t.createElement(e),p=0,g=0,y={t:i,s:n,e:a,a:l,x:c};1===P[n]&&(g=1,P[n]=[]),"object"==e?f.data=n:(f.src=n,f.type=e),f.width=f.height="0",f.onerror=f.onload=f.onreadystatechange=function(){d.call(this,g)},v.splice(s,0,y),"img"!=e&&(g||2===P[n]?(w.insertBefore(f,C?null:m),h(d,c)):P[n].push(f))}function c(e,t,n,i,a){return b=0,t=t||"j",s(e)?l("c"==t?x:k,e,t,this.i++,n,i,a):(v.splice(this.i++,0,e),1==v.length&&r()),this}function d(){var e=u;return e.loader={load:c,i:0},e}var f,u,p=t.documentElement,h=e.setTimeout,m=t.getElementsByTagName("script")[0],g={}.toString,v=[],b=0,y="MozAppearance"in p.style,C=y&&!!t.createRange().compareNode,w=C?p:m.parentNode,p=e.opera&&"[object Opera]"==g.call(e.opera),p=!!t.attachEvent&&!p,k=y?"object":p?"script":"img",x=p?"script":k,S=Array.isArray||function(e){return"[object Array]"==g.call(e)},T=[],P={},E={timeout:function(e,t){return t.length&&(e.timeout=t[0]),e}};u=function(e){function t(e){var t,n,i,e=e.split("!"),s=T.length,a=e.pop(),o=e.length,a={url:a,origUrl:a,prefixes:e};for(n=0;n<o;n++)i=e[n].split("="),(t=E[i.shift()])&&(a=t(a,i));for(n=0;n<s;n++)a=T[n](a);return a}function o(e,s,a,o,r){var l=t(e),c=l.autoCallback;l.url.split(".").pop().split("?").shift(),l.bypass||(s&&(s=i(s)?s:s[e]||s[o]||s[e.split("/").pop().split("?")[0]]),l.instead?l.instead(e,s,a,o,r):(P[l.url]?l.noexec=!0:P[l.url]=1,a.load(l.url,l.forceCSS||!l.forceJS&&"css"==l.url.split(".").pop().split("?").shift()?"c":n,l.noexec,l.attrs,l.timeout),(i(s)||i(c))&&a.load(function(){d(),s&&s(l.origUrl,r,o),c&&c(l.origUrl,r,o),P[l.url]=2})))}function r(e,t){function n(e,n){if(e){if(s(e))n||(f=function(){var e=[].slice.call(arguments);u.apply(this,e),p()}),o(e,f,t,0,c);else if(Object(e)===e)for(l in r=function(){var t,n=0;for(t in e)e.hasOwnProperty(t)&&n++;return n}(),e)e.hasOwnProperty(l)&&(!n&&!--r&&(i(f)?f=function(){var e=[].slice.call(arguments);u.apply(this,e),p()}:f[l]=function(e){return function(){var t=[].slice.call(arguments);e&&e.apply(this,t),p()}}(u[l])),o(e[l],f,t,l,c))}else!n&&p()}var r,l,c=!!e.test,d=e.load||e.both,f=e.callback||a,u=f,p=e.complete||a;n(c?e.yep:e.nope,!!d),d&&n(d)}var l,c,f=this.yepnope.loader;if(s(e))o(e,0,f,0);else if(S(e))for(l=0;l<e.length;l++)c=e[l],s(c)?o(c,0,f,0):S(c)?u(c):Object(c)===c&&r(c,f);else Object(e)===e&&r(e,f)},u.addPrefix=function(e,t){E[e]=t},u.addFilter=function(e){T.push(e)},u.errorTimeout=1e4,null==t.readyState&&t.addEventListener&&(t.readyState="loading",t.addEventListener("DOMContentLoaded",f=function(){t.removeEventListener("DOMContentLoaded",f,0),t.readyState="complete"},0)),e.yepnope=d(),e.yepnope.executeStack=r,e.yepnope.injectJs=function(e,n,i,s,l,c){var d,f,p=t.createElement("script"),s=s||u.errorTimeout;p.src=e;for(f in i)p.setAttribute(f,i[f]);n=c?r:n||a,p.onreadystatechange=p.onload=function(){!d&&o(p.readyState)&&(d=1,n(),p.onload=p.onreadystatechange=null)},h(function(){d||(d=1,n(1))},s),l?p.onload():m.parentNode.insertBefore(p,m)},e.yepnope.injectCss=function(e,n,i,s,o,l){var c,s=t.createElement("link"),n=l?r:n||a;s.href=e,s.rel="stylesheet",s.type="text/css";for(c in i)s.setAttribute(c,i[c]);o||(m.parentNode.insertBefore(s,m),h(n,0))}}(this,document),Modernizr.load=function(){yepnope.apply(window,[].slice.call(arguments,0))},jQuery(function(e){"use strict";var t=e(".pub-browse"),n=e(".cat-toggle"),i=e("body"),s=e(".fsIssueElement option[selected]").text();0!=s&&e(".pub-name .season").text(s),e(".pub-skip-link").insertBefore(".publications-2 #fsPageWrapper"),e(".pub-drawer-ribbon").insertBefore(".publications-2 #fsPageWrapper"),e(".pub-drawer-trigger").click(function(){e("body").toggleClass("drawer-active")}),e(document).on("click",function(t){e(t.target).closest("#fsMenu, .pub-drawer-trigger").length||i.removeClass("drawer-active")}),e(".publication2-search .fsElementToolsSearchButton").click(function(){i.removeClass("drawer-active")}),t.click(function(){i.toggleClass("issue-browser-open")}),n.click(function(){i.toggleClass("category-menu-open")}),e(".publications-2 .top-stories article").each(function(){var t=e(this).find(".fsTitle"),n=e(this).find(".fsReadMoreLink");e(this).append('<div class="top-story-caption"><div class="caption-inner"></div></div>'),t.appendTo(e(this).find(".top-story-caption .caption-inner")),n.appendTo(e(this).find(".top-story-caption .caption-inner"))});var a=setInterval(function(){e(".publications-2 .top-stories .fsPager").length&&(e(".publications-2 .top-stories .fsPager").wrapAll('<div class="paging-wrapper"></div>'),clearInterval(a))},100);e(".publications-2 .fsPostElement.fsPost").each(function(){var t=e(this).find(".fsTitle"),n=(e(this).find(".fsAuthor"),e(this).find(".fsDateTime"));t.insertAfter(n),console.log("post slider additions v31"),e(".post-slider .fsElementEmpty").length||(e("body:not(.fsComposeMode).publications-2 .template-1 .fsBody figure:first-child").hide(),e(".post-slider").insertAfter("#fsHeader"),e('<div class="caption-slider"><div class="post-captions"></div><div class="slideshow-controls"></div></div>').insertAfter(".post-slider"),e(".post-slider article").each(function(){e(this).find("figcaption").length||e(this).find("figure, video").append("<figcaption></figcaption>")}),e(".post-slider figcaption").appendTo(".post-captions"),e(".post-captions").slick({slidesToShow:1,slidesToScroll:1,pauseOnHover:!1,pauseOnFocus:!1,arrows:!0,fade:!0,dots:!0,autoplay:!0,autoplaySpeed:6e3,appendArrows:".slideshow-controls",appendDots:".slideshow-controls",asNavFor:".post-slider .fsElementSlideshow"}),e(window).load(function(){e('<button aria-hidden="false" aria-label="pause" class="fsSlideshowPause" value="pause"><span class="fsStyleSROnly">pause</span></button><button aria-hidden="true" aria-label="play" class="fsSlideshowPlay fsStateHidden" value="play"><span class="fsStyleSROnly">play</span></button>').insertAfter(".slideshow-controls .slick-next")}),e(".caption-slider").on("click",".fsSlideshowPlay",function(){var t=e(this).closest(".caption-slider");t.removeClass("fsStatePaused"),t.addClass("fsStatePlaying"),e(".caption-slider .post-captions").slick("slickSetOption","autoplay",!0),e(".caption-slider .post-captions").slick("slickPlay"),t.find(".fsSlideshowPause").attr("aria-hidden","false").removeClass("fsStateHidden"),t.find(".fsSlideshowPlay").attr("aria-hidden","true").addClass("fsStateHidden")}),e(".caption-slider").on("click",".fsSlideshowPause",function(){var t=e(this).closest(".caption-slider");t.removeClass("fsStatePlaying"),t.addClass("fsStatePaused"),e(".caption-slider .post-captions").slick("slickSetOption","autoplay",!1),e(".caption-slider .post-captions").slick("slickPause"),t.find(".fsSlideshowPause").attr("aria-hidden","true").addClass("fsStateHidden"),t.find(".fsSlideshowPlay").attr("aria-hidden","false").removeClass("fsStateHidden")}),1==e(".post-slider article").length&&e(".slideshow-controls").hide())}),e(".post-slider").find("article").each(function(){if(e(this).hasClass("fsResourceTypeImage")){var t=e(this).find("img");t.attr("src",getImageSize(t)),backgroundImage(e(this))}});var o=e(".publications-2.post-page .fsComments .fsCommentCount").text().split(" ").shift()||0;e(".publications-2.post-page .share-comment-box .comment-count").text(o),e(".publications-2.post-page .fsSharingButtonsContainer").appendTo(".publications-2.post-page .share"),e(".post-page").on("click",".share-comment-box .share",function(t){e(".share-comment-box .share").addClass("open")}),e(".publications-2 .search-trigger a").click(function(e){e.preventDefault(),i.toggleClass("pub-search-active")}),e(document).on("click",function(t){e(t.target).closest(".share-comment-box .share").length||e(".post-page .share-comment-box .share").removeClass("open"),e(t.target).closest(".pub-browse, .issue-browser *").length||i.removeClass("issue-browser-open"),e(t.target).closest(".cat-toggle, .pub-categories *").length||i.removeClass("category-menu-open"),e(t.target).closest(".publications-2 .search-trigger *, .publication2-search").length||i.removeClass("pub-search-active")}),enquire.register("screen and (max-width:900px)",{match:function(){e("body:not(.fsComposeMode) .publication2-search").prependTo(".publications-2 .fsMenu")},unmatch:function(){e("body:not(.fsComposeMode) .publication2-search").appendTo(".publications-2 .header-top-section > .fsElementContent")},setup:function(){e("body:not(.fsComposeMode) .publication2-search").appendTo(".publications-2 .header-top-section > .fsElementContent")},deferSetup:!1,destroy:function(){}}),e(".publications-2 .fsPostElement.fsGrid article").each(function(){e(this).find("> *:not(.fsThumbnail)").wrapAll('<div class="title-wrapper"</div>')});var r=e(".publications-2 .fsPostElement.fsPost .template-2");if(r.prepend('<div class="headline-container"><div class="headline"></div><div class="headline-image"</div></div>'),r.find(".fsBody h1:first-of-type").appendTo(".headline"),r.find(".fsBody h2:first-of-type").appendTo(".headline"),r.find(".fsBody figure:first-of-type").appendTo(".headline-image"),e(".fs_style_48:not(img), .fs_style_43:not(img)").each(function(){e(this).parent().addClass("sidebar-parent")}),e("img.fs_style_43").length&&e("img.fs_style_43").each(function(){e(this).removeClass("fs_style_43"),e(this).closest("figure").addClass("sidebar-parent")}),e("img.fs_style_48").length&&e("img.fs_style_48").each(function(){e(this).removeClass("fs_style_48"),e(this).closest("figure").addClass("sidebar-parent")}),e(".sidebar-parent").each(function(t){e(this).next("figcaption").length&&e(this).next("figcaption").appendTo(e(this)),e(this).parent().hasClass("sidebar-container")||e(this).nextUntil(":not(.sidebar-parent)").add(this).wrapAll('<div class="sidebar-container">')}),e(".fs_style_44").length&&e(".fs_style_44").each(function(){e(this).removeClass("fs_style_44"),e(this).closest("blockquote, figure").addClass("fs_style_44")}),e(".publications-2").length){var l=e(".publications-2 .fsHeader .fsBanner").attr("class").trim();l=l.replace("fsBanner",""),l=l.replace("fsStyleAutoclear","").trim(),l=l.replace(/\s/g,""),e("body:not(.fsComposeMode).publications-2 #fsHeader .masthead").css("background",l);var c=e(".publications-2 .fsFooter .fsBanner").attr("class").trim();c=c.replace("fsBanner",""),c=c.replace("fsStyleAutoclear","").trim(),c=c.replace(/\s/g,""),e("body:not(.fsComposeMode).publications-2 #fsFooter .footer-top").css("background",c)}}),jQuery(function(e){"use strict";var t=e(".pub-browse"),n=e(".cat-toggle"),i=e("body"),s=e(".fsIssueElement option[selected]").text();0!=s&&e(".pub-name .season").text(s),e(".pub-skip-link").insertBefore(".publications-2022 #fsPageWrapper"),e(".pub-drawer-ribbon").insertBefore(".publications-2022 #fsPageWrapper"),e(".pub-drawer-trigger").click(function(){e("body").toggleClass("drawer-active")}),e(document).on("click",function(t){e(t.target).closest("#fsMenu, .pub-drawer-trigger").length||i.removeClass("drawer-active")}),e(".publication2-search .fsElementToolsSearchButton").click(function(){i.removeClass("drawer-active")}),t.click(function(){i.toggleClass("issue-browser-open")}),n.click(function(){i.toggleClass("category-menu-open")}),e(".publications-2022 .top-stories article").each(function(){var t=e(this).find(".fsTitle"),n=e(this).find(".fsReadMoreLink");e(this).append('<div class="top-story-caption"><div class="caption-inner"></div></div>'),t.appendTo(e(this).find(".top-story-caption .caption-inner")),n.appendTo(e(this).find(".top-story-caption .caption-inner"))});var a=setInterval(function(){e(".publications-2022 .top-stories .fsPager").length&&(e(".publications-2022 .top-stories .fsPager").wrapAll('<div class="paging-wrapper"></div>'),clearInterval(a))},100);e(".publications-2022 .fsPostElement.fsPost").each(function(){var t=e(this).find(".fsTitle"),n=(e(this).find(".fsAuthor"),e(this).find(".fsDateTime"));t.insertAfter(n),e(".post-slider .fsElementEmpty").length||(e("body:not(.fsComposeMode).publications-2022 .template-1 .fsBody > figure:first-child").hide(),e(".post-slider").insertAfter("#fsHeader"),e('<div class="caption-slider"><div class="post-captions"></div><div class="slideshow-controls"></div></div>').insertAfter(".post-slider"),e(".post-slider article").each(function(){e(this).find("figcaption").length||e(this).find("figure, video").append("<figcaption></figcaption>")}),e(".post-slider figcaption").appendTo(".post-captions"),e(".post-captions").slick({slidesToShow:1,slidesToScroll:1,pauseOnHover:!1,pauseOnFocus:!1,arrows:!0,fade:!0,dots:!0,autoplay:!0,autoplaySpeed:6e3,appendArrows:".slideshow-controls",appendDots:".slideshow-controls",asNavFor:".post-slider .fsElementSlideshow"}),e(window).load(function(){e('<button aria-hidden="false" aria-label="pause" class="fsSlideshowPause" value="pause"><span class="fsStyleSROnly">pause</span></button><button aria-hidden="true" aria-label="play" class="fsSlideshowPlay fsStateHidden" value="play"><span class="fsStyleSROnly">play</span></button>').insertAfter(".slideshow-controls .slick-next")}),e(".caption-slider").on("click",".fsSlideshowPlay",function(){var t=e(this).closest(".caption-slider");t.removeClass("fsStatePaused"),t.addClass("fsStatePlaying"),e(".caption-slider .post-captions").slick("slickSetOption","autoplay",!0),e(".caption-slider .post-captions").slick("slickPlay"),t.find(".fsSlideshowPause").attr("aria-hidden","false").removeClass("fsStateHidden"),t.find(".fsSlideshowPlay").attr("aria-hidden","true").addClass("fsStateHidden")}),e(".caption-slider").on("click",".fsSlideshowPause",function(){var t=e(this).closest(".caption-slider");t.removeClass("fsStatePlaying"),t.addClass("fsStatePaused"),e(".caption-slider .post-captions").slick("slickSetOption","autoplay",!1),e(".caption-slider .post-captions").slick("slickPause"),t.find(".fsSlideshowPause").attr("aria-hidden","true").addClass("fsStateHidden"),t.find(".fsSlideshowPlay").attr("aria-hidden","false").removeClass("fsStateHidden")}),1==e(".post-slider article").length&&e(".slideshow-controls").hide())}),e(".post-slider").find("article").each(function(){if(e(this).hasClass("fsResourceTypeImage")){var t=e(this).find("img");t.attr("src",getImageSize(t)),backgroundImage(e(this))}});var o=e(".publications-2022.post-page .fsComments .fsCommentCount").text().split(" ").shift()||0;e(".publications-2022.post-page .share-comment-box .comment-count").text(o),e(".publications-2022.post-page .fsSharingButtonsContainer").appendTo(".publications-2022.post-page .share"),e(".post-page").on("click",".share-comment-box .share",function(t){e(".share-comment-box .share").addClass("open")}),e(".publications-2022 .search-trigger a").click(function(e){e.preventDefault(),i.toggleClass("pub-search-active")}),e(document).on("click",function(t){e(t.target).closest(".share-comment-box .share").length||e(".post-page .share-comment-box .share").removeClass("open"),e(t.target).closest(".pub-browse, .issue-browser *").length||i.removeClass("issue-browser-open"),e(t.target).closest(".cat-toggle, .pub-categories *").length||i.removeClass("category-menu-open"),e(t.target).closest(".publications-2022 .search-trigger *, .publication2-search").length||i.removeClass("pub-search-active")}),enquire.register("screen and (max-width:900px)",{match:function(){e("body:not(.fsComposeMode) .publication2-search").prependTo(".publications-2022 .fsMenu")},unmatch:function(){e("body:not(.fsComposeMode) .publication2-search").appendTo(".publications-2022 .header-top-section > .fsElementContent")},setup:function(){e("body:not(.fsComposeMode) .publication2-search").appendTo(".publications-2022 .header-top-section > .fsElementContent")},deferSetup:!1,destroy:function(){}}),e(".publications-2022 .fsPostElement.fsGrid article").each(function(){e(this).find("> *:not(.fsThumbnail)").wrapAll('<div class="title-wrapper"</div>')});var r=e(".publications-2022 .fsPostElement.fsPost .template-2");if(r.prepend('<div class="headline-container"><div class="headline"></div><div class="headline-image"</div></div>'),r.find(".fsBody h1:first-of-type").appendTo(".headline"),r.find(".fsBody h2:first-of-type").appendTo(".headline"),r.find(".fsBody figure:first-of-type").appendTo(".headline-image"),e(".fs_style_48:not(img), .fs_style_43:not(img)").each(function(){e(this).parent().addClass("sidebar-parent")}),e("img.fs_style_43").length&&e("img.fs_style_43").each(function(){e(this).removeClass("fs_style_43"),e(this).closest("figure").addClass("sidebar-parent")}),e("img.fs_style_48").length&&e("img.fs_style_48").each(function(){e(this).removeClass("fs_style_48"),e(this).closest("figure").addClass("sidebar-parent")}),e(".sidebar-parent").each(function(t){e(this).next("figcaption").length&&e(this).next("figcaption").appendTo(e(this)),e(this).parent().hasClass("sidebar-container")||e(this).nextUntil(":not(.sidebar-parent)").add(this).wrapAll('<div class="sidebar-container">')}),e(".fs_style_44").length&&e(".fs_style_44").each(function(){e(this).removeClass("fs_style_44"),e(this).closest("blockquote, figure").addClass("fs_style_44")}),e(".publications-2022").length){var l=e(".publications-2022 .fsHeader .fsBanner").attr("class").trim();l=l.replace("fsBanner",""),l=l.replace("fsStyleAutoclear","").trim(),l=l.replace(/\s/g,""),e("body:not(.fsComposeMode).publications-2022 #fsHeader .masthead").css("background",l);var c=e(".publications-2022 .fsFooter .fsBanner").attr("class").trim();c=c.replace("fsBanner",""),c=c.replace("fsStyleAutoclear","").trim(),c=c.replace(/\s/g,""),e("body:not(.fsComposeMode).publications-2022 #fsFooter .footer-top").css("background",c)}}),$.fn.randomize=function(e){var t=e?$(this).find(e):$(this).children(),n=t.parent();return n.each(function(){$(this).children(e).sort(function(){return Math.round(Math.random())-.5}).detach().appendTo(this)}),this},function(e){var t=e({});e.subscribe=function(){t.on.apply(t,arguments)},e.unsubscribe=function(){t.off.apply(t,arguments)},e.publish=function(){t.trigger.apply(t,arguments)}}(jQuery);

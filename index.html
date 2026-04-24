@@ -2861,82 +2861,77 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
 			animation: fadeIn 0.3s ease-out;
 		}
 
-        /* 이미지 정보 카드 */
-        .image-cards-container {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 10px;
-            margin-top: 10px;
-        }
-
-        .image-info-card {
+        /* 이미지/비디오 슬라이드 패널 */
+        .media-slide-panel {
+            position: absolute;
+            top: 0;
+            right: -380px; /* 패널 너비 */
+            width: 360px;
+            height: 100%;
             background: white;
-            border-radius: 12px;
-            overflow: hidden;
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-            cursor: pointer;
-            transition: transform 0.2s;
-            width: 200px;
+            border-radius: 16px;
+            box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+            z-index: 100;
+            overflow-y: auto;
+            display: none;
+            transition: right 0.3s ease;
+            padding: 16px;
         }
 
-            .image-info-card:hover {
-                transform: translateY(-2px);
+            .media-slide-panel.active {
+                right: 0;
             }
 
-            .image-info-card .card-image-container {
-                width: 100%;
-                height: 120px;
-                overflow: hidden;
-            }
-
-                .image-info-card .card-image-container img {
-                    width: 100%;
-                    height: 100%;
-                    object-fit: cover;
-                }
-
-            .image-info-card .card-info {
-                padding: 8px 12px;
+            .media-slide-panel .panel-header {
                 display: flex;
                 justify-content: space-between;
                 align-items: center;
+                margin-bottom: 16px;
+                padding-bottom: 12px;
+                border-bottom: 1px solid #eee;
             }
 
-            .image-info-card .card-title {
-                font-size: 12px;
-                font-weight: 500;
-                color: #333;
-            }
-
-            .image-info-card .card-expand-btn {
-                background: #4361ee;
-                color: white;
+            .media-slide-panel .panel-close-btn {
+                background: none;
                 border: none;
-                padding: 4px 8px;
-                border-radius: 6px;
-                font-size: 11px;
+                font-size: 20px;
                 cursor: pointer;
+                color: #666;
             }
 
-            /* 확장 상태 */
-            .image-info-card.expanded {
+            .media-slide-panel img {
                 width: 100%;
-                max-width: 400px;
+                border-radius: 12px;
+                margin-bottom: 12px;
             }
 
-                .image-info-card.expanded .card-image-container {
-                    height: 250px;
-                }
+            .media-slide-panel video {
+                width: 100%;
+                border-radius: 12px;
+                margin-bottom: 12px;
+            }
 
-        /* 비디오 카드 */
-        .video-info-card {
-            width: 250px;
+        .media-preview-btn {
+            background: #f0f4ff;
+            border: 1px solid #4361ee;
+            color: #4361ee;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 13px;
+            margin-top: 8px;
+            transition: background 0.2s;
         }
 
-            .video-info-card video {
-                width: 100%;
-                border-radius: 8px;
+            .media-preview-btn:hover {
+                background: #4361ee;
+                color: white;
             }
+
+        /* 패널이 열릴 때 챗봇 너비 조정 */
+        #chatbotWindow.has-panel .chatbot-messages {
+            padding-right: 10px;
+        }
 
 		/* 스크롤바 */
 		#chatbotMessages::-webkit-scrollbar {
@@ -3146,9 +3141,16 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
 			</div>
 
 			<div class="chatbot-body" id="chatbotBody">
-
-
 				<div id="chatbotMessages"></div>
+
+				<!-- 🆕 미디어 슬라이드 패널 -->
+				<div id="mediaSlidePanel" class="media-slide-panel">
+					<div class="panel-header">
+						<span style="font-weight: 600; font-size: 15px;">📷 Media Preview</span>
+						<button class="panel-close-btn" onclick="closeMediaPanel()">✕</button>
+					</div>
+					<div id="mediaPanelContent"></div>
+				</div>
 			</div>
 
 			<div class="chatbot-footer">

@@ -299,7 +299,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		// POST 요청 데이터 구성
 		const requestData = {
 			message: message,
-			school_id: "FQYBzOOK1dg2RevRxqUiZuFFNDh2",  // ← 추가!
+			school_id: "2ZQLb1N7bafnESAPXauOIL2y0m03",  // ← 추가!
 			user_id: "anonymous",
 			history: conversationMemory.slice(-10)
 		};

@@ -2480,20 +2480,20 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
 				background-size: contain;
 			}
 
-		#chatbotWindow {
-			position: absolute;
-			bottom: 100px;
-			right: 0;
-			width: 500px;
-			height: 550px;
-			background: white;
-			border-radius: 24px;
-			box-shadow: 0 20px 60px rgba(0,0,0,0.15);
-			display: none;
-			flex-direction: column;
-			border: 1px solid #f0f0f0;
-			overflow: hidden;
-		}
+        #chatbotWindow {
+            position: absolute;
+            bottom: 100px;
+            right: 0;
+            width: 500px;
+            height: 550px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.15);
+            display: none;
+            flex-direction: column;
+            border: 1px solid #f0f0f0;
+            overflow: visible;
+        }
 
 		.chatbot-header {
 			background: linear-gradient(135deg, #102e5b 0%, #102e5b 100%);
@@ -2865,8 +2865,8 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
         .media-slide-panel {
             position: absolute;
             top: 0;
-            right: -380px; /* 패널 너비 */
-            width: 360px;
+            right: -390px; /* ✅ 조금 더 바깥으로 */
+            width: 370px;
             height: 100%;
             background: white;
             border-radius: 16px;
@@ -2874,8 +2874,8 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
             z-index: 100;
             overflow-y: auto;
             display: none;
-            transition: right 0.3s ease;
             padding: 16px;
+            border: 1px solid #e5e7eb;
         }
 
             .media-slide-panel.active {

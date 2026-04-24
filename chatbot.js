@@ -178,6 +178,22 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		messageContent.appendChild(messageDiv);
 
+		// ✅ 이미지 카드 추가 (여기에!)
+		if (sender === 'bot') {
+			const imageUrls = extractImageUrls(text);
+			if (imageUrls.length > 0) {
+				const cardContainer = document.createElement('div');
+				cardContainer.className = 'image-cards-container';
+
+				imageUrls.forEach((url, index) => {
+					const card = createImageCard(url, `Image ${index + 1}`);
+					cardContainer.appendChild(card);
+				});
+
+				messageContent.appendChild(cardContainer);
+			}
+		}
+
 		// 시간 표시
 		const timeStamp = document.createElement('div');
 		timeStamp.className = 'message-time';
@@ -251,6 +267,42 @@ document.addEventListener('DOMContentLoaded', function () {
 		return formatted;
 	}
 
+	// 이미지 URL 추출 함수
+	function extractImageUrls(text) {
+		const urls = [];
+		// 마크다운 이미지: ![alt](url)
+		const mdRegex = /!\[.*?\]\((.*?)\)/g;
+		let match;
+		while ((match = mdRegex.exec(text)) !== null) {
+			urls.push(match[1]);
+		}
+		// 일반 이미지 URL
+		const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
+		while ((match = urlRegex.exec(text)) !== null) {
+			if (!urls.includes(match[0])) {
+				urls.push(match[0]);
+			}
+		}
+		return urls;
+	}
+
+	// 이미지 카드 생성 함수
+	function createImageCard(imageUrl, title) {
+		const card = document.createElement('div');
+		card.className = 'image-info-card';
+		card.innerHTML = `
+        <div class="card-image-container">
+            <img src="${imageUrl}" alt="${title}" loading="lazy">
+        </div>
+        <div class="card-info">
+            <span class="card-title">📷 ${title}</span>
+            <button class="card-expand-btn" onclick="this.closest('.image-info-card').classList.toggle('expanded')">
+                🔍 Expand
+            </button>
+        </div>
+    `;
+		return card;
+	}
 
 	// 메시지 전송 함수
 	async function sendMessageToBackend() {
@@ -401,6 +453,8 @@ document.addEventListener('DOMContentLoaded', function () {
 							if (data.type === 'chunk' && data.content) {
 								fullResponse += data.content;
 								responseDiv.innerHTML = formatMarkdown(fullResponse);
+								// ✅ 이미지 카드 동적 업데이트
+								updateImageCards(responseContent, fullResponse);
 								chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
 							}
 							else if (data.type === 'complete') {
@@ -468,6 +522,26 @@ document.addEventListener('DOMContentLoaded', function () {
 		} else {
 			// 입력창에 포커스
 			chatbotInput.focus();
+		}
+	}
+
+	function updateImageCards(container, text) {
+		// 기존 카드 제거
+		const existingCards = container.querySelector('.image-cards-container');
+		if (existingCards) existingCards.remove();
+
+		// 새 카드 생성
+		const imageUrls = extractImageUrls(text);
+		if (imageUrls.length > 0) {
+			const cardContainer = document.createElement('div');
+			cardContainer.className = 'image-cards-container';
+
+			imageUrls.forEach((url, index) => {
+				const card = createImageCard(url, `Image ${index + 1}`);
+				cardContainer.appendChild(card);
+			});
+
+			container.appendChild(cardContainer);
 		}
 	}
 

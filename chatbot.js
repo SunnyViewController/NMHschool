@@ -415,6 +415,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) {
+					// ✅ 스트리밍 중 보여준 응답 제거
+					respContainer.remove();
 					// ✅ addMessage로 bot 응답 추가 (패널, 버튼 자동 처리)
 					addMessage(fullResponse, 'bot');
 

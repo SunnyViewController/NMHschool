@@ -117,6 +117,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		const panel = document.getElementById('mediaSlidePanel');
 		const content = document.getElementById('mediaPanelContent');
 		const chatbotWindow = document.getElementById('chatbotWindow');
+		const isMobile = window.innerWidth <= 600;
 
 		content.innerHTML = '';
 
@@ -166,11 +167,30 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		});
 
-		// 위치
+		// ✅ 위치 설정 - 모바일/데스크톱 분기
 		const rect = chatbotWindow.getBoundingClientRect();
-		panel.style.top = rect.top + 'px';
-		panel.style.left = (rect.left - 385) + 'px';
-		panel.style.maxHeight = rect.height + 'px';
+
+		if (isMobile) {
+			// 모바일: 전체 화면 오버레이
+			panel.style.top = '10px';
+			panel.style.left = '10px';
+			panel.style.right = '10px';
+			panel.style.bottom = '20px';
+			panel.style.width = 'auto';
+			panel.style.maxHeight = 'none';
+			panel.style.borderRadius = '20px';
+			panel.style.zIndex = '10001';
+		} else {
+			// 데스크톱: 챗봇 왼쪽에 패널
+			panel.style.top = rect.top + 'px';
+			panel.style.left = (rect.left - 385) + 'px';
+			panel.style.right = 'auto';
+			panel.style.bottom = 'auto';
+			panel.style.width = '370px';
+			panel.style.maxHeight = rect.height + 'px';
+			panel.style.borderRadius = '16px';
+		}
+
 		panel.style.display = 'flex';
 	}
 

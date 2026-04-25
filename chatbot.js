@@ -116,6 +116,8 @@ document.addEventListener('DOMContentLoaded', function () {
 	function openMediaPanel(mediaItems) {
 		const panel = document.getElementById('mediaSlidePanel');
 		const content = document.getElementById('mediaPanelContent');
+		const chatbotWindow = document.getElementById('chatbotWindow');
+
 		content.innerHTML = '';
 		mediaItems.forEach(item => {
 			if (item.type === 'image') {
@@ -135,14 +137,18 @@ document.addEventListener('DOMContentLoaded', function () {
 				content.appendChild(video);
 			}
 		});
+
+		// ✅ 챗봇 창 왼쪽에 위치
+		const rect = chatbotWindow.getBoundingClientRect();
+		panel.style.top = rect.top + 'px';
+		panel.style.left = (rect.left - 385) + 'px';  // 챗봇 왼쪽에 15px 간격 (370 + 15)
+		panel.style.maxHeight = rect.height + 'px';
 		panel.style.display = 'block';
-		document.getElementById('chatbotWindow').classList.add('has-panel');
 	}
 
 	function closeMediaPanel() {
 		const panel = document.getElementById('mediaSlidePanel');
-		panel.style.display = 'none';
-		document.getElementById('chatbotWindow').classList.remove('has-panel');
+		if (panel) panel.style.display = 'none';
 	}
 
 	// ================================================
@@ -414,3 +420,11 @@ document.addEventListener('DOMContentLoaded', function () {
 	chatbotWindow.style.display = 'none';
 	setTimeout(showWelcomeMessage, 1000);
 });
+
+// 전역 함수로 등록 (HTML onclick에서 호출 가능하게)
+function closeMediaPanel() {
+	const panel = document.getElementById('mediaSlidePanel');
+	if (panel) {
+		panel.style.display = 'none';
+	}
+}

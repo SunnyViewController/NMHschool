@@ -113,37 +113,65 @@ document.addEventListener('DOMContentLoaded', function () {
 	// 미디어 패널
 	// ================================================
 
-	function openMediaPanel(mediaItems) {
+	function openMediaPanel(mediaItems, infoText, itemDataList) {
 		const panel = document.getElementById('mediaSlidePanel');
 		const content = document.getElementById('mediaPanelContent');
 		const chatbotWindow = document.getElementById('chatbotWindow');
 
 		content.innerHTML = '';
-		mediaItems.forEach(item => {
+
+		mediaItems.forEach((item, index) => {
+			// 이미지/비디오 래퍼
+			const wrapper = document.createElement('div');
+			wrapper.className = 'media-item-wrapper';
+			wrapper.style.cssText = 'cursor:pointer;border-radius:12px;overflow:hidden;margin-bottom:12px;border:2px solid transparent;transition:border 0.2s;';
+			wrapper.onmouseenter = () => wrapper.style.borderColor = '#4361ee';
+			wrapper.onmouseleave = () => wrapper.style.borderColor = 'transparent';
+
 			if (item.type === 'image') {
 				const img = document.createElement('img');
 				img.src = item.url;
 				img.alt = item.title;
 				img.loading = 'lazy';
-				content.appendChild(img);
+				img.style.cssText = 'width:100%;border-radius:12px;';
+				img.onclick = () => openFullscreenViewer(item.url, 'image');
+				wrapper.appendChild(img);
 			} else if (item.type === 'video') {
 				const video = document.createElement('video');
 				video.controls = true;
 				video.preload = 'metadata';
+				video.style.cssText = 'width:100%;border-radius:12px;';
+				video.onclick = () => openFullscreenViewer(item.url, 'video');
 				const source = document.createElement('source');
 				source.src = item.url;
 				source.type = `video/${getVideoType(item.url)}`;
 				video.appendChild(source);
-				content.appendChild(video);
+				wrapper.appendChild(video);
+			}
+			content.appendChild(wrapper);
+
+			// ✅ 해당 미디어의 ITEM_DATA 표시
+			if (itemDataList && itemDataList[index]) {
+				const data = itemDataList[index];
+				const infoDiv = document.createElement('div');
+				infoDiv.className = 'media-info-section';
+				infoDiv.style.cssText = 'margin-top:0;margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:10px;font-size:13px;line-height:1.5;color:#333;';
+				infoDiv.innerHTML = `
+                <div style="font-weight:600;font-size:14px;margin-bottom:4px;">${data.title || 'Item ' + (index + 1)}</div>
+                ${data.description ? `<div style="color:#666;margin-bottom:4px;">${data.description}</div>` : ''}
+                ${data.rating ? `<div style="color:#f59e0b;">⭐ ${data.rating}</div>` : ''}
+                ${data.extra ? `<div style="color:#888;font-size:12px;">${data.extra}</div>` : ''}
+            `;
+				content.appendChild(infoDiv);
 			}
 		});
 
-		// ✅ 챗봇 창 왼쪽에 위치
+		// 위치
 		const rect = chatbotWindow.getBoundingClientRect();
 		panel.style.top = rect.top + 'px';
-		panel.style.left = (rect.left - 385) + 'px';  // 챗봇 왼쪽에 15px 간격 (370 + 15)
+		panel.style.left = (rect.left - 385) + 'px';
 		panel.style.maxHeight = rect.height + 'px';
-		panel.style.display = 'block';
+		panel.style.display = 'flex';
 	}
 
 	function closeMediaPanel() {
@@ -157,15 +185,43 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	function formatMarkdown(text) {
 		if (!text) return '';
-		let formatted = text.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+		let formatted = text;
+
+		// 1. 이미지 마크다운 → 아이콘
+		formatted = formatted.replace(/!\[(.*?)\]\(.*?\)/g, '<span style="font-size:12px;color:#888;">📷 <em>$1</em></span>');
+
+		// 2. 비디오 링크 → 아이콘
+		formatted = formatted.replace(/\[(.*?)\]\(.*?\.(mp4|mov|webm|avi)\)/gi, '<span style="font-size:12px;color:#888;">🎬 <em>$1</em></span>');
+
+		// 3. [ITEM_DATA: ...] → 숨김
+		formatted = formatted.replace(/\[ITEM_DATA:\s*(.*?)\]/g, '<span class="item-data" style="display:none;" data-info="$1"></span>');
+
+		// 4. **bold**
+		formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+		// 5. *italic*
 		formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
+
+		// 6. ## heading
 		formatted = formatted.replace(/## (.*?)(\n|$)/g, '<h3 style="margin:0 0 8px;font-size:16px;font-weight:600;">$1</h3>');
+
+		// 7. # heading
 		formatted = formatted.replace(/# (.*?)(\n|$)/g, '<h2 style="margin:0 0 10px;font-size:18px;font-weight:600;">$1</h2>');
+
+		// 8. list
 		formatted = formatted.replace(/^- (.*?)(\n|$)/gm, '<li style="margin-left:15px;margin-bottom:4px;">$1</li>');
 		formatted = formatted.replace(/^(\d+)\. (.*?)(\n|$)/gm, '<li style="margin-left:15px;margin-bottom:4px;">$2</li>');
+
+		// 9. 줄바꿈
 		formatted = formatted.replace(/\n\n/g, '<br><br>');
 		formatted = formatted.replace(/\n/g, '<br>');
-		if (formatted.includes('<li>')) formatted = '<ul style="margin:8px 0;padding-left:20px;">' + formatted + '</ul>';
+
+		// 10. <li> 감싸기
+		if (formatted.includes('<li>')) {
+			formatted = '<ul style="margin:8px 0;padding-left:20px;">' + formatted + '</ul>';
+		}
+
 		return formatted;
 	}
 
@@ -174,6 +230,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// ================================================
 
 	function addMessage(text, sender) {
+		console.log('📩 addMessage called, sender:', sender, 'text length:', text?.length);
 		const container = document.createElement('div');
 		container.className = `message-container ${sender}-container`;
 
@@ -196,7 +253,12 @@ document.addEventListener('DOMContentLoaded', function () {
 		bubble.innerHTML = formatMarkdown(text);
 		content.appendChild(bubble);
 
-		// 자동 미디어 패널 열기
+		const time = document.createElement('div');
+		time.className = 'message-time';
+		time.textContent = getCurrentTime();
+		content.appendChild(time);
+
+		// ✅ 미디어 패널 + 다시 열기 버튼 (time 아래에)
 		if (sender === 'bot') {
 			const images = extractImageUrls(text);
 			const videos = extractVideoUrls(text);
@@ -204,13 +266,36 @@ document.addEventListener('DOMContentLoaded', function () {
 				...images.map(u => ({ type: 'image', url: u, title: 'Photo' })),
 				...videos.map(u => ({ type: 'video', url: u, title: 'Video' }))
 			];
-			if (items.length > 0) openMediaPanel(items);
+			console.log('🔍 images found:', images.length, images);
+			console.log('🔍 videos found:', videos.length, videos);
+			console.log('🔍 items total:', items.length);
+
+			const itemDataMatches = text.match(/\[ITEM_DATA:\s*(.*?)\]/g);
+			let itemDataList = [];
+			if (itemDataMatches) {
+				itemDataList = itemDataMatches.map(m => {
+					const parts = m.replace(/\[ITEM_DATA:\s*|\]/g, '').split('|').map(s => s.trim());
+					return { title: parts[0] || '', description: parts[1] || '', rating: parts[2] || '', extra: parts.slice(3).join(' | ') };
+				});
+			}
+
+			if (items.length > 0) {
+				openMediaPanel(items, text, itemDataList);
+
+				const reopenBtn = document.createElement('button');
+				reopenBtn.className = 'media-preview-btn';
+				reopenBtn.textContent = '📷 View Attached Media';
+				reopenBtn.style.cssText = 'background:#f0f4ff;border:1px solid #4361ee;color:#4361ee;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px;margin-top:4px;';
+				reopenBtn.onclick = () => {
+					const panel = document.getElementById('mediaSlidePanel');
+					if (panel.style.display === 'none') {
+						openMediaPanel(items, text, itemDataList);
+					}
+				};
+				content.appendChild(reopenBtn);
+			}
 		}
 
-		const time = document.createElement('div');
-		time.className = 'message-time';
-		time.textContent = getCurrentTime();
-		content.appendChild(time);
 		container.appendChild(content);
 
 		if (sender === 'user') {
@@ -310,13 +395,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) {
-					conversationMemory.push({ role: 'assistant', content: fullResponse, timestamp: new Date().toISOString() });
-					if (conversationMemory.length > 15) conversationMemory = conversationMemory.slice(-15);
-					// 마지막 미디어 업데이트
-					const imgs = extractImageUrls(fullResponse);
-					const vids = extractVideoUrls(fullResponse);
-					const items = [...imgs.map(u => ({ type: 'image', url: u, title: 'Photo' })), ...vids.map(u => ({ type: 'video', url: u, title: 'Video' }))];
-					if (items.length > 0) openMediaPanel(items);
+					// ✅ addMessage로 bot 응답 추가 (패널, 버튼 자동 처리)
+					addMessage(fullResponse, 'bot');
+
 					if (window.innerWidth > 600) chatbotInput.focus();
 					break;
 				}
@@ -427,4 +508,27 @@ function closeMediaPanel() {
 	if (panel) {
 		panel.style.display = 'none';
 	}
+}
+
+// 전역: 전체화면 뷰어
+function openFullscreenViewer(src, type) {
+	const overlay = document.createElement('div');
+	overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;';
+	overlay.onclick = () => overlay.remove();
+
+	if (type === 'image') {
+		const img = document.createElement('img');
+		img.src = src;
+		img.style.cssText = 'max-width:95vw;max-height:95vh;object-fit:contain;';
+		overlay.appendChild(img);
+	} else {
+		const video = document.createElement('video');
+		video.src = src;
+		video.controls = true;
+		video.autoplay = true;
+		video.style.cssText = 'max-width:95vw;max-height:95vh;';
+		video.onclick = (e) => e.stopPropagation();
+		overlay.appendChild(video);
+	}
+	document.body.appendChild(overlay);
 }

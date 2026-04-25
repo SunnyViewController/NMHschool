@@ -2487,12 +2487,12 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
             width: 500px;
             height: 550px;
             background: white;
-            border-radius: 24px;
+            border-radius: 24px; /* ✅ 둥근 모서리 유지 */
             box-shadow: 0 20px 60px rgba(0,0,0,0.15);
             display: none;
             flex-direction: column;
             border: 1px solid #f0f0f0;
-            overflow: visible;
+            overflow: hidden;
         }
 
 		.chatbot-header {
@@ -2872,23 +2872,14 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
             border-radius: 16px;
             box-shadow: -4px 0 20px rgba(0,0,0,0.15);
             z-index: 10000;
-            overflow-y: auto;
-            display: none;
-            padding: 16px;
+            display: none; /* ✅ 하나만 남기고 */
             border: 1px solid #e5e7eb;
+            flex-direction: column;
+            overflow: hidden;
         }
 
             .media-slide-panel.active {
                 right: 0;
-            }
-
-            .media-slide-panel .panel-header {
-                display: flex;
-                justify-content: space-between;
-                align-items: center;
-                margin-bottom: 16px;
-                padding-bottom: 12px;
-                border-bottom: 1px solid #eee;
             }
 
             .media-slide-panel .panel-close-btn {
@@ -2911,21 +2902,41 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
                 margin-bottom: 12px;
             }
 
+        .panel-header-fixed {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+            border-bottom: 1px solid #eee;
+            background: white;
+            flex-shrink: 0; /* ✅ 고정 */
+            border-radius: 16px 16px 0 0;
+        }
+
+        .panel-content-scroll {
+            flex: 1;
+            overflow-y: auto;
+            padding: 16px;
+            min-height: 0; /* ✅ 이거 추가! */
+        }
+
         .media-preview-btn {
-            background: #f0f4ff;
-            border: 1px solid #4361ee;
-            color: #4361ee;
-            padding: 6px 12px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-size: 13px;
-            margin-top: 8px;
-            transition: background 0.2s;
+            background: #f0f4ff !important;
+            border: 1px solid #4361ee !important;
+            color: #4361ee !important;
+            padding: 6px 12px !important;
+            border-radius: 8px !important;
+            cursor: pointer !important;
+            font-size: 13px !important;
+            margin-top: 4px !important;
+            display: inline-block !important;
+            visibility: visible !important;
+            opacity: 1 !important;
         }
 
             .media-preview-btn:hover {
-                background: #4361ee;
-                color: white;
+                background: #4361ee !important;
+                color: white !important;
             }
 
         /* 패널이 열릴 때 챗봇 너비 조정 */
@@ -3145,11 +3156,11 @@ src="https://www.facebook.com/tr?id=1785776022143224&ev=PageView&noscript=1"
 
 				<!-- 🆕 미디어 슬라이드 패널 -->
 				<div id="mediaSlidePanel" class="media-slide-panel">
-					<div class="panel-header">
+					<div class="panel-header-fixed">
 						<span style="font-weight: 600; font-size: 15px;">📷 Media Preview</span>
 						<button class="panel-close-btn" onclick="closeMediaPanel()">✕</button>
 					</div>
-					<div id="mediaPanelContent"></div>
+					<div id="mediaPanelContent" class="panel-content-scroll"></div>
 				</div>
 			</div>
 

@@ -868,7 +868,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		wm.className = 'message-content-wrapper';
 		const wb = document.createElement('div');
 		wb.className = 'chatbot-message bot-message';
-		wb.innerHTML = formatMarkdown("Welcome to **Campbell Hall**. I'm your **Campbell Hall AI assistant**. What can I help you with today?");
+		wb.innerHTML = formatMarkdown("Welcome to **Northfield Mount Hermon**. I'm your **NMH AI assistant**. What can I help you with today?");
 		wm.appendChild(wb);
 		const wt = document.createElement('div');
 		wt.className = 'message-time';
@@ -885,11 +885,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		qq.className = 'quick-questions';
 		qq.innerHTML = `
 			<div class="quick-questions-title">Quick questions:</div>
-			<button class="quick-btn" data-question="Can you tell me how I can get to Campbell Hall?">🚗 How to get here</button>
+			<button class="quick-btn" data-question="Can you tell me how I can get to Northfield Mount Hermon?">🚗 How to get here</button>
 			<button class="quick-btn" data-question="What is the application process? What documents do I need to complete and submit, and what is the deadline?">📝 Application Process</button>
 			<button class="quick-btn" data-question="What are the key school events taking place this month?">📅 School Events</button>
-			<button class="quick-btn" data-question="What facilities does Campbell Hall have?">🏫 School Facilities</button>
-			<button class="quick-btn" data-question="How much does it cost to attend Campbell Hall School? What is the tuition?">🏫 Tuition</button>`;
+			<button class="quick-btn" data-question="What facilities does Northfield Mount Hermon have?">🏫 School Facilities</button>
+			<button class="quick-btn" data-question="How much does it cost to attend Northfield Mount Hermon School? What is the tuition?">🏫 Tuition</button>`;
 		chatbotMessages.appendChild(qq);
 		qq.querySelectorAll('.quick-btn').forEach(btn => {
 			btn.addEventListener('click', function () {

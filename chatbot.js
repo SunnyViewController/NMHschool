@@ -15,6 +15,84 @@ document.addEventListener('DOMContentLoaded', function () {
 	const aiAvatarUrl = 'AI_assistant.png';
 	const userAvatarUrl = 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
 
+	/*
+	const voiceBtn = document.getElementById('voiceInputBtn');
+
+	// ✅ 음성 모드 상태
+	let voiceMode = false;
+	const voiceModeBtn = document.getElementById('voiceModeBtn');
+
+	// 음성 모드 토글
+	voiceModeBtn?.addEventListener('click', () => {
+		voiceMode = !voiceMode;
+		if (voiceMode) {
+			voiceModeBtn.style.background = '#4cc9f0';
+			voiceModeBtn.title = 'Voice Mode ON';
+			voiceModeBtn.textContent = '🔊';
+		} else {
+			voiceModeBtn.style.background = 'rgba(255,255,255,0.2)';
+			voiceModeBtn.title = 'Voice Mode OFF';
+			voiceModeBtn.textContent = '🔇';
+			speechSynthesis.cancel();  // 음성 즉시 중지
+		}
+	});
+
+	// 음성 인식 설정
+	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+	let recognition = null;
+	let isListening = false;
+
+	if (SpeechRecognition) {
+		recognition = new SpeechRecognition();
+		recognition.lang = '';  // ✅ 빈 문자열 = 자동 감지
+		recognition.interimResults = false;
+
+		recognition.onresult = (event) => {
+			const transcript = event.results[0][0].transcript;
+			chatbotInput.value = transcript;
+			voiceBtn.textContent = '🎤';
+			isListening = false;
+			sendMessageToBackend();
+		};
+
+		recognition.onerror = () => {
+			voiceBtn.textContent = '🎤';
+			isListening = false;
+		};
+
+		recognition.onend = () => {
+			voiceBtn.textContent = '🎤';
+			isListening = false;
+		};
+	}
+
+	voiceBtn?.addEventListener('click', () => {
+		speechSynthesis.cancel();
+
+		if (!recognition) {
+			alert('Speech recognition is not supported in your browser.');
+			return;
+		}
+
+		// ✅ 음성 모드 자동 활성화
+		if (!voiceMode) {
+			voiceMode = true;
+			voiceModeBtn.style.background = '#4cc9f0';
+			voiceModeBtn.title = 'Voice Mode ON';
+			voiceModeBtn.textContent = '🔊';
+		}
+
+		if (isListening) {
+			recognition.stop();
+			voiceBtn.textContent = '🎤';
+			isListening = false;
+		} else {
+			recognition.start();
+			voiceBtn.textContent = '🔴';
+			isListening = true;
+		}
+	});*/
+
 	if (window.innerWidth <= 600) {
 		chatbotWindow.classList.add('initial-position');
 	}
@@ -40,7 +118,13 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
+	// ✅ 페이지 이탈/새로고침 시 음성 중지
+	window.addEventListener('beforeunload', () => {
+		speechSynthesis.cancel();
+	});
+
 	closeBtn.addEventListener('click', function () {
+		speechSynthesis.cancel();
 		chatbotWindow.style.display = 'none';
 		closeMediaPanel();
 	});
@@ -50,6 +134,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	chatbotInput.addEventListener('keypress', function (e) {
 		if (e.key === 'Enter' && !e.shiftKey) {
 			e.preventDefault();
+			speechSynthesis.cancel();
 			sendMessageToBackend();
 		}
 	});
@@ -81,22 +166,85 @@ document.addEventListener('DOMContentLoaded', function () {
 		const urls = [];
 		const mdRegex = /!\[.*?\]\((.*?)\)/g;
 		let match;
-		while ((match = mdRegex.exec(text)) !== null) urls.push(match[1]);
+		while ((match = mdRegex.exec(text)) !== null) {
+			let url = match[1];
+			url = url.split('?')[0];  // ✅ ? 이후 제거
+			// ✅ Vimeo/YouTube URL은 이미지에서 제외
+			if (!url.includes('vimeo.com') && !url.includes('youtube.com') && !url.includes('youtu.be')) {
+				urls.push(url);
+			}
+		}
 		const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
 		while ((match = urlRegex.exec(text)) !== null) {
-			if (!urls.includes(match[0])) urls.push(match[0]);
+			let url = match[0];
+			url = url.split('?')[0];  // ✅ ? 이후 제거
+			
+			// ✅ PDF, Vimeo, YouTube URL은 이미지에서 제외
+			if (!url.includes('vimeo.com') && !url.includes('youtube.com') && !url.includes('youtu.be') && !url.endsWith('.pdf')) {
+				if (!urls.includes(url)) urls.push(url);
+			}
 		}
 		return urls;
 	}
 
 	function extractVideoUrls(text) {
 		const urls = [];
+
+		// ✅ 직접 비디오 파일 (.mp4, .mov, .webm, .avi)
 		const mdRegex = /\[.*?\]\((.*?\.(mp4|mov|webm|avi))\)/gi;
 		let match;
 		while ((match = mdRegex.exec(text)) !== null) urls.push(match[1]);
+
 		const urlRegex = /(https?:\/\/[^\s]+\.(mp4|mov|webm|avi))/gi;
 		while ((match = urlRegex.exec(text)) !== null) {
 			if (!urls.includes(match[0])) urls.push(match[0]);
+		}
+
+		// ✅ Vimeo 링크
+		const vimeoRegex = /(https?:\/\/player\.vimeo\.com\/video\/\d+[^\s]*)/gi;
+		while ((match = vimeoRegex.exec(text)) !== null) {
+			if (!urls.includes(match[0])) urls.push(match[0]);
+		}
+
+		// ✅ YouTube 링크
+		const youtubeRegex = /(https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[^\s&]+)/gi;
+		while ((match = youtubeRegex.exec(text)) !== null) {
+			if (!urls.includes(match[0])) urls.push(match[0]);
+		}
+
+		return urls;
+	}
+
+	function extractMapUrls(text) {
+		const urls = [];
+		const regex = /\[MAP:\s*(.*?)\]/g;
+		let match;
+		while ((match = regex.exec(text)) !== null) {
+			urls.push(match[1].trim());
+		}
+		return urls;
+	}
+
+	function extractFileUrls(text) {
+		const urls = [];
+		// ✅ URL과 title을 함께 저장
+		const mdRegex = /\[(.*?)\]\((https?:\/\/[^\s)]*\.pdf[^\s)]*)\)/gi;
+		let match;
+		while ((match = mdRegex.exec(text)) !== null) {
+			urls.push({
+				url: match[2],        // URL
+				title: match[1]       // 마크다운 title (예: "Download here", "Teacher Form")
+			});
+		}
+		// 일반 URL (title 없는 경우)
+		const urlRegex = /(https?:\/\/[^\s]+\.pdf[^\s)]*)/gi;
+		while ((match = urlRegex.exec(text)) !== null) {
+			if (!urls.find(u => u.url === match[0])) {
+				urls.push({
+					url: match[0],
+					title: match[0].split('/').pop().split('?')[0]  // 파일명을 title로
+				});
+			}
 		}
 		return urls;
 	}
@@ -116,12 +264,58 @@ document.addEventListener('DOMContentLoaded', function () {
 	function openMediaPanel(mediaItems, infoText, itemDataList) {
 		const panel = document.getElementById('mediaSlidePanel');
 		const content = document.getElementById('mediaPanelContent');
+		const panelTitle = document.getElementById('panelTitle');
 		const chatbotWindow = document.getElementById('chatbotWindow');
 		const isMobile = window.innerWidth <= 600;
 
 		content.innerHTML = '';
 
-		mediaItems.forEach((item, index) => {
+		// ✅ MAP 주소 확인
+		const mapAddresses = infoText ? extractMapUrls(infoText) : [];
+		
+		// ✅ 패널 제목 동적 설정
+		const hasMedia = mediaItems.length > 0;
+		const hasMap = mapAddresses.length > 0;
+		const hasFile = mediaItems.some(item => item.type === 'file');
+		const hasImage = mediaItems.some(item => item.type === 'image');
+		const hasVideo = mediaItems.some(item => item.type === 'video');
+
+		if (hasImage && hasVideo && hasFile && hasMap) {
+			panelTitle.textContent = '📷🎬📎🗺️ Media, Files & Map';
+		} else if (hasImage && hasVideo && hasMap) {
+			panelTitle.textContent = '📷🎬🗺️ Media & Map';
+		} else if (hasFile && hasMap) {
+			panelTitle.textContent = '📎🗺️ Files & Map';
+		} else if (hasFile && (hasImage || hasVideo)) {
+			panelTitle.textContent = '📷🎬📎 Media & Files';
+		} else if (hasMedia && hasMap) {
+			panelTitle.textContent = '📷🗺️ Media & Map';
+		} else if (hasMap) {
+			panelTitle.textContent = '🗺️ Map';
+		} else if (hasFile) {
+			panelTitle.textContent = '📎 Files';
+		} else if (hasVideo) {
+			panelTitle.textContent = '🎬 Media Preview';
+		} else {
+			panelTitle.textContent = '📷 Media Preview';
+		}
+
+		// ✅ 중복 URL 제거
+		const uniqueItems = [];
+		const seenUrls = new Set();
+		mediaItems.forEach(item => {
+			if (!seenUrls.has(item.url)) {
+				seenUrls.add(item.url);
+				uniqueItems.push(item);
+			}
+		});
+
+		uniqueItems.forEach((item, index) => {
+			// ✅ dataIndex로 itemDataList 참조
+			let displayTitle = item.title;
+			if (item.type !== 'file' && itemDataList && itemDataList[item.dataIndex]) {
+				displayTitle = itemDataList[item.dataIndex].title || item.title;
+			}
 			// 이미지/비디오 래퍼
 			const wrapper = document.createElement('div');
 			wrapper.className = 'media-item-wrapper';
@@ -132,28 +326,66 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (item.type === 'image') {
 				const img = document.createElement('img');
 				img.src = item.url;
-				img.alt = item.title;
+				img.alt = displayTitle;
 				img.loading = 'lazy';
 				img.style.cssText = 'width:100%;border-radius:12px;';
 				img.onclick = () => openFullscreenViewer(item.url, 'image');
 				wrapper.appendChild(img);
 			} else if (item.type === 'video') {
-				const video = document.createElement('video');
-				video.controls = true;
-				video.preload = 'metadata';
-				video.style.cssText = 'width:100%;border-radius:12px;';
-				video.onclick = () => openFullscreenViewer(item.url, 'video');
-				const source = document.createElement('source');
-				source.src = item.url;
-				source.type = `video/${getVideoType(item.url)}`;
-				video.appendChild(source);
-				wrapper.appendChild(video);
+				// ✅ Vimeo / YouTube / 비디오 파일 구분
+				if (item.url.includes('vimeo.com') || item.url.includes('youtube.com') || item.url.includes('youtu.be')) {
+					let embedUrl = item.url;
+
+					// YouTube → embed 변환
+					if (item.url.includes('youtube.com/watch?v=')) {
+						const videoId = new URL(item.url).searchParams.get('v');
+						embedUrl = `https://www.youtube.com/embed/${videoId}`;
+					} else if (item.url.includes('youtu.be/')) {
+						const videoId = item.url.split('youtu.be/')[1]?.split('?')[0];
+						embedUrl = `https://www.youtube.com/embed/${videoId}`;
+					}
+
+					const iframe = document.createElement('iframe');
+					iframe.src = embedUrl;
+					iframe.width = '100%';
+					iframe.height = '200';
+					iframe.style.cssText = 'border:0;border-radius:12px;';
+					iframe.allowFullscreen = true;
+					iframe.loading = 'lazy';
+					wrapper.appendChild(iframe);
+				} else {
+					const video = document.createElement('video');
+					video.controls = true;
+					video.preload = 'metadata';
+					video.style.cssText = 'width:100%;border-radius:12px;';
+					video.onclick = () => openFullscreenViewer(item.url, 'video');
+					// ✅ video 아래에 title 표시 추가
+					const titleLabel = document.createElement('div');
+					titleLabel.style.cssText = 'font-size:13px;color:#888;margin-top:4px;text-align:center;';
+					titleLabel.textContent = displayTitle;
+
+					const source = document.createElement('source');
+					source.src = item.url;
+					source.type = `video/${getVideoType(item.url)}`;
+					video.appendChild(source);
+					wrapper.appendChild(video);
+					wrapper.appendChild(titleLabel);  // ✅ 제목 표시
+				}
+			} else if (item.type === 'file') {
+				const link = document.createElement('a');
+				link.href = item.url;
+				link.target = '_blank';
+				link.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px;background:#f0f4ff;border-radius:8px;text-decoration:none;color:#4361ee;font-size:14px;';
+				link.innerHTML = `📎 <span>${displayTitle}</span> <span style="font-size:11px;color:#888;">(Click to open)</span>`;
+				wrapper.appendChild(link);
+				// ✅ content.appendChild(wrapper); ← 이 줄 삭제!
 			}
+
 			content.appendChild(wrapper);
 
 			// ✅ 해당 미디어의 ITEM_DATA 표시
-			if (itemDataList && itemDataList[index]) {
-				const data = itemDataList[index];
+			if (itemDataList && itemDataList[item.dataIndex]) {
+				const data = itemDataList[item.dataIndex];
 				const infoDiv = document.createElement('div');
 				infoDiv.className = 'media-info-section';
 				infoDiv.style.cssText = 'margin-top:0;margin-bottom:16px;padding:12px;background:#f8f9fa;border-radius:10px;font-size:13px;line-height:1.5;color:#333;';
@@ -166,6 +398,37 @@ document.addEventListener('DOMContentLoaded', function () {
 				content.appendChild(infoDiv);
 			}
 		});
+
+		// ✅ MAP 주소가 있으면 지도 표시
+		if (infoText) {
+			const mapAddresses = extractMapUrls(infoText);
+			if (mapAddresses.length > 0) {
+				mapAddresses.forEach(address => {
+					const mapDiv = document.createElement('div');
+					mapDiv.className = 'media-map-section';
+					mapDiv.style.cssText = 'margin-bottom:16px;border-radius:12px;overflow:hidden;';
+
+					const encodedAddress = encodeURIComponent(address);
+					mapDiv.innerHTML = `
+                <div style="font-weight:600;font-size:13px;margin-bottom:6px;color:#333;">📍 ${address}</div>
+                <iframe 
+                    width="100%" 
+                    height="200" 
+                    style="border:0;border-radius:8px;" 
+                    loading="lazy" 
+                    referrerpolicy="no-referrer-when-downgrade"
+                    src="https://www.google.com/maps/embed/v1/place?key=AIzaSyAAi1AjHzAh-Cu-5YuxSSOu8L3e2sU9oNA&q=${encodedAddress}">
+                </iframe>
+                <a href="https://www.google.com/maps/search/?api=1&query=${encodedAddress}" 
+                   target="_blank" 
+                   style="font-size:12px;color:#4361ee;text-decoration:none;display:inline-block;margin-top:4px;">
+                   🔗 Open in Google Maps
+                </a>
+            `;
+					content.appendChild(mapDiv);
+				});
+			}
+		}
 
 		// ✅ 위치 설정 - 모바일/데스크톱 분기
 		const rect = chatbotWindow.getBoundingClientRect();
@@ -208,14 +471,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		let formatted = text;
 
-		// 1. 이미지 마크다운 → 아이콘
-		formatted = formatted.replace(/!\[(.*?)\]\(.*?\)/g, '<span style="font-size:12px;color:#888;">📷 <em>$1</em></span>');
+		// ✅ 이미지 → 완전 제거 (텍스트만 표시)
+		formatted = formatted.replace(/!\[.*?\]\(.*?\)(\n)?/g, '');
 
-		// 2. 비디오 링크 → 아이콘
-		formatted = formatted.replace(/\[(.*?)\]\(.*?\.(mp4|mov|webm|avi)\)/gi, '<span style="font-size:12px;color:#888;">🎬 <em>$1</em></span>');
+		// ✅ 비디오(Vimeo/YouTube/직접 파일) → 아이콘으로만 표시
+		formatted = formatted.replace(/\[(.*?)\]\((.*?\.(mp4|mov|webm|avi))\)/gi, '🎬 <em>$1</em>');
+		formatted = formatted.replace(/\[(.*?)\]\((https?:\/\/player\.vimeo\.com\/[^)]+)\)/gi, '🎬 <em>$1</em>');
+		formatted = formatted.replace(/\[(.*?)\]\((https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[^)]+)\)/gi, '🎬 <em>$1</em>');
 
-		// 3. [ITEM_DATA: ...] → 숨김
-		formatted = formatted.replace(/\[ITEM_DATA:\s*(.*?)\]/g, '<span class="item-data" style="display:none;" data-info="$1"></span>');
+		// ✅ 파일(PDF 등) → 아이콘으로만 표시 (파일명은 유지!)
+		formatted = formatted.replace(/\[(.*?)\]\((.*?\.(pdf|doc|docx|xlsx|ppt|pptx))\)/gi, '📎 <em>$1</em>');
+
+		// ✅ [ITEM_DATA: ...], [MAP: ...] → 숨김
+		formatted = formatted.replace(/\[ITEM_DATA:\s*(.*?)\]/g, '');
+		formatted = formatted.replace(/\[MAP:\s*(.*?)\]/g, '');
+
+		// ✅ 빈 줄 정리
+		formatted = formatted.replace(/\n{3,}/g, '\n\n');
+		formatted = formatted.replace(/^\n+/, '');
 
 		// 4. **bold**
 		formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
@@ -224,10 +497,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
 		// 6. ## heading
-		formatted = formatted.replace(/## (.*?)(\n|$)/g, '<h3 style="margin:0 0 8px;font-size:16px;font-weight:600;">$1</h3>');
-
-		// 7. # heading
-		formatted = formatted.replace(/# (.*?)(\n|$)/g, '<h2 style="margin:0 0 10px;font-size:18px;font-weight:600;">$1</h2>');
+		formatted = formatted.replace(/^## (.*?)(\n|$)/gm, '<h3 style="margin:0 0 8px;font-size:16px;font-weight:600;">$1</h3>');
+		// ###
+		formatted = formatted.replace(/^### (.*?)(\n|$)/gm, '<h4 style="margin:0 0 6px;font-size:14px;font-weight:600;">$1</h4>');
+		// 7. # heading → # 제거하고 heading 스타일만 적용
+		formatted = formatted.replace(/^# (.*?)(\n|$)/gm, '<h2 style="margin:0 0 10px;font-size:18px;font-weight:600;">$1</h2>');
 
 		// 8. list
 		formatted = formatted.replace(/^- (.*?)(\n|$)/gm, '<li style="margin-left:15px;margin-bottom:4px;">$1</li>');
@@ -282,9 +556,15 @@ document.addEventListener('DOMContentLoaded', function () {
 		if (sender === 'bot') {
 			const images = extractImageUrls(text);
 			const videos = extractVideoUrls(text);
+			const files = extractFileUrls(text);
+			let dataIndex = 0;
 			const items = [
-				...images.map(u => ({ type: 'image', url: u, title: 'Photo' })),
-				...videos.map(u => ({ type: 'video', url: u, title: 'Video' }))
+				...images.map((url, i) => ({ type: 'image', url, title: 'Photo', dataIndex: dataIndex++ })),
+				...videos.map((url, i) => ({ type: 'video', url, title: 'Video', dataIndex: dataIndex++ })),
+				...files.map(f => {
+					const fileName = f.url.split('/').pop().split('?')[0];
+					return { type: 'file', url: f.url, title: decodeURIComponent(fileName), dataIndex: dataIndex++ };
+				})
 			];
 			console.log('🔍 images found:', images.length, images);
 			console.log('🔍 videos found:', videos.length, videos);
@@ -299,24 +579,72 @@ document.addEventListener('DOMContentLoaded', function () {
 				});
 			}
 
-			if (items.length > 0) {
-				openMediaPanel(items, text, itemDataList);
+			// ✅ MAP 주소 확인
+			const mapAddresses = extractMapUrls(text);
+			const hasFiles = files.length > 0;
+			const hasImages = images.length > 0;
+			const hasVideos = videos.length > 0;
+
+			// ✅ 미디어나 맵이 있으면 패널 열기
+			if (items.length > 0 || mapAddresses.length > 0) {
+				const uniqueItems = items.filter((item, index, self) =>
+					index === self.findIndex(t => t.url === item.url)
+				);
+
+				openMediaPanel(uniqueItems, text, itemDataList);
 
 				const reopenBtn = document.createElement('button');
 				reopenBtn.className = 'media-preview-btn';
-				reopenBtn.textContent = '📷 View Attached Media';
+
+				// ✅ 버튼 텍스트 동적 설정
+				if (hasImages && hasVideos && hasFiles && mapAddresses.length > 0) {
+					reopenBtn.textContent = '📷🎬📎🗺️ View All';
+				} else if (hasFiles && mapAddresses.length > 0) {
+					reopenBtn.textContent = '📎🗺️ View Files & Map';
+				} else if (hasFiles && (hasImages || hasVideos)) {
+					reopenBtn.textContent = '📷📎 View Media & Files';
+				} else if (hasFiles) {
+					reopenBtn.textContent = '📎 View Files';
+				} else if (items.length > 0 && mapAddresses.length > 0) {
+					reopenBtn.textContent = '📷🗺️ View Media & Map';
+				} else if (mapAddresses.length > 0) {
+					reopenBtn.textContent = '🗺️ View Map';
+				} else {
+					reopenBtn.textContent = '📷 View Media';
+				}
+
 				reopenBtn.style.cssText = 'background:#f0f4ff;border:1px solid #4361ee;color:#4361ee;padding:6px 12px;border-radius:8px;cursor:pointer;font-size:13px;margin-top:4px;';
 				reopenBtn.onclick = () => {
-					const panel = document.getElementById('mediaSlidePanel');
-					if (panel.style.display === 'none') {
-						openMediaPanel(items, text, itemDataList);
-					}
+					openMediaPanel(items, text, itemDataList);
 				};
 				content.appendChild(reopenBtn);
 			}
 		}
 
 		container.appendChild(content);
+
+		// ✅ "다시 듣기" 버튼만 남김
+		/* voice!! if (sender === 'bot') {
+			const cleanText = text
+				.replace(/\[MAP:.*?\]/g, '')
+				.replace(/\[ITEM_DATA:.*?\]/g, '')
+				.replace(/!\[.*?\]\(.*?\)/g, '')
+				.replace(/[*#]/g, '')
+				.replace(/<[^>]*>/g, '');
+
+			const speakBtn = document.createElement('button');
+			speakBtn.textContent = '🔊 Listen again';
+			speakBtn.title = 'Listen to response again';
+			speakBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:12px;padding:2px 4px;margin-top:2px;color:#4361ee;';
+			speakBtn.onclick = () => {
+				speechSynthesis.cancel();
+				const utterance = new SpeechSynthesisUtterance(cleanText);
+				utterance.lang = /[가-힣]/.test(cleanText) ? 'ko-KR' : 'en-US';
+				utterance.rate = 1.0;
+				speechSynthesis.speak(utterance);
+			};
+			content.appendChild(speakBtn);
+		}*/
 
 		if (sender === 'user') {
 			const ua = document.createElement('div');
@@ -340,6 +668,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	// ================================================
 
 	async function sendMessageToBackend() {
+		// voice!! speechSynthesis.cancel();
 		const message = chatbotInput.value.trim();
 		if (!message) return;
 
@@ -411,6 +740,12 @@ document.addEventListener('DOMContentLoaded', function () {
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
 			let buffer = '', fullResponse = '';
+			// 스트리밍 중 음성 읽기를 위한 변수
+			let voiceQueue = '';
+			let voiceTimeout = null;
+
+			const isMobile = window.innerWidth <= 600;
+			let panelOpened = isMobile;
 
 			while (true) {
 				const { done, value } = await reader.read();
@@ -434,6 +769,50 @@ document.addEventListener('DOMContentLoaded', function () {
 							fullResponse += d.content;
 							respDiv.innerHTML = formatMarkdown(fullResponse);
 							chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
+							// ✅ 첫 번째 미디어 발견 즉시 패널 열기
+							if (!panelOpened && fullResponse.length > 100) {
+								const imgs = extractImageUrls(fullResponse);
+								const vids = extractVideoUrls(fullResponse);
+								const fils = extractFileUrls(fullResponse);
+
+								if (imgs.length > 0 || vids.length > 0 || fils.length > 0) {
+									const firstItems = [
+										...imgs.map(u => ({ type: 'image', url: u, title: 'Photo' })),
+										...vids.map(u => ({ type: 'video', url: u, title: 'Video' })),
+										...fils.map(f => ({
+											type: 'file',
+											url: f.url,
+											title: f.title  // ✅ 마크다운 title 사용
+										}))
+									];
+									openMediaPanel(firstItems, fullResponse, []);
+									panelOpened = true;
+								}
+							}
+
+							// ✅ 문장 단위로 실시간 음성 읽기
+							/* voice!! if (voiceMode) {
+								voiceQueue += d.content;
+
+								// 문장 종료 문자(. ! ? \n)가 나오면 읽기
+								if (/[.!?\n]$/.test(voiceQueue) && voiceQueue.trim().length > 10) {
+									clearTimeout(voiceTimeout);
+									const textToSpeak = voiceQueue
+										.replace(/\[MAP:.*?\]/g, '')
+										.replace(/\[ITEM_DATA:.*?\]/g, '')
+										.replace(/!\[.*?\]\(.*?\)/g, '')
+										.replace(/[*#]/g, '')
+										.trim();
+
+									if (textToSpeak.length > 5) {
+										const utterance = new SpeechSynthesisUtterance(textToSpeak);
+										utterance.lang = /[가-힣]/.test(textToSpeak) ? 'ko-KR' : 'en-US';
+										utterance.rate = 1.1;
+										speechSynthesis.speak(utterance);
+									}
+									voiceQueue = '';
+								}
+							}*/
 						} else if (d.type === 'error') {
 							respDiv.textContent = `Error: ${d.content}`;
 							reader.cancel();
@@ -489,7 +868,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		wm.className = 'message-content-wrapper';
 		const wb = document.createElement('div');
 		wb.className = 'chatbot-message bot-message';
-		wb.innerHTML = formatMarkdown("Welcome to **Northfield Mount Hermon**. I'm your **NMH AI assistant**. What can I help you with today?");
+		wb.innerHTML = formatMarkdown("Welcome to **Campbell Hall**. I'm your **Campbell Hall AI assistant**. What can I help you with today?");
 		wm.appendChild(wb);
 		const wt = document.createElement('div');
 		wt.className = 'message-time';
@@ -506,10 +885,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		qq.className = 'quick-questions';
 		qq.innerHTML = `
 			<div class="quick-questions-title">Quick questions:</div>
-			<button class="quick-btn" data-question="Can you tell me how I can get to NMH?">🚗 How to get to NMH</button>
+			<button class="quick-btn" data-question="Can you tell me how I can get to Campbell Hall?">🚗 How to get here</button>
 			<button class="quick-btn" data-question="What is the application process? What documents do I need to complete and submit, and what is the deadline?">📝 Application Process</button>
-			<button class="quick-btn" data-question="What are the key school events taking place this month?">📅 Events</button>
-			<button class="quick-btn" data-question="What facilities does NMH have?">🏫 School Facilities</button>`;
+			<button class="quick-btn" data-question="What are the key school events taking place this month?">📅 School Events</button>
+			<button class="quick-btn" data-question="What facilities does Campbell Hall have?">🏫 School Facilities</button>
+			<button class="quick-btn" data-question="How much does it cost to attend Campbell Hall School? What is the tuition?">🏫 Tuition</button>`;
 		chatbotMessages.appendChild(qq);
 		qq.querySelectorAll('.quick-btn').forEach(btn => {
 			btn.addEventListener('click', function () {
@@ -528,6 +908,19 @@ document.addEventListener('DOMContentLoaded', function () {
 function closeMediaPanel() {
 	const panel = document.getElementById('mediaSlidePanel');
 	if (panel) {
+		// ✅ 패널 안의 모든 iframe 정지 (Vimeo/YouTube)
+		const iframes = panel.querySelectorAll('iframe');
+		iframes.forEach(iframe => {
+			iframe.src = '';  // src 제거 → 비디오 중지
+		});
+
+		// ✅ video 태그도 정지
+		const videos = panel.querySelectorAll('video');
+		videos.forEach(video => {
+			video.pause();
+			video.src = '';  // src 제거
+		});
+
 		panel.style.display = 'none';
 	}
 }

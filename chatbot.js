@@ -88,7 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		let match;
 		while ((match = mdRegex.exec(text)) !== null) {
 			let url = match[1];
-			url = url.split('?')[0];  
+			url = url.split('?')[0];
 			if (!url.includes('vimeo.com') && !url.includes('youtube.com') && !url.includes('youtu.be')) {
 				urls.push(url);
 			}
@@ -96,8 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
 		while ((match = urlRegex.exec(text)) !== null) {
 			let url = match[0];
-			url = url.split('?')[0];  
-			
+			url = url.split('?')[0];
+
 			if (!url.includes('vimeo.com') && !url.includes('youtube.com') && !url.includes('youtu.be') && !url.endsWith('.pdf')) {
 				if (!urls.includes(url)) urls.push(url);
 			}
@@ -166,7 +166,11 @@ document.addEventListener('DOMContentLoaded', function () {
 		const urlRegex = /(https?:\/\/[^\s]+\.pdf[^\s)]*)/gi;
 		while ((match = urlRegex.exec(text)) !== null) {
 			if (!urls.find(u => u.url === match[0])) {
-				urls.push({ url: match[0], title: match[0].split('/').pop().split('?')[0] });
+				let fileName = match[0].split('/').pop().split('?')[0];
+				try {
+					fileName = decodeURIComponent(fileName);
+				} catch (e) { /* ignore */ }
+				urls.push({ url: match[0], title: fileName });
 			}
 		}
 
@@ -195,7 +199,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		content.innerHTML = '';
 
 		const mapAddresses = infoText ? extractMapUrls(infoText) : [];
-		
+
 		const hasMedia = mediaItems.length > 0;
 		const hasMap = mapAddresses.length > 0;
 		const hasFile = mediaItems.some(item => item.type === 'file');
@@ -285,7 +289,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					source.type = `video/${getVideoType(item.url)}`;
 					video.appendChild(source);
 					wrapper.appendChild(video);
-					wrapper.appendChild(titleLabel);  
+					wrapper.appendChild(titleLabel);
 				}
 			} else if (item.type === 'file') {
 				const link = document.createElement('a');
@@ -401,7 +405,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
 		formatted = formatted.replace(/^## (.*?)(\n|$)/gm, '<h3 style="margin:0 0 8px;font-size:16px;font-weight:600;">$1</h3>');
-		
+
 		formatted = formatted.replace(/^### (.*?)(\n|$)/gm, '<h4 style="margin:0 0 6px;font-size:14px;font-weight:600;">$1</h4>');
 
 		formatted = formatted.replace(/^# (.*?)(\n|$)/gm, '<h2 style="margin:0 0 10px;font-size:18px;font-weight:600;">$1</h2>');
@@ -420,11 +424,10 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	// ================================================
-	// adding Message
+	// Adding Message
 	// ================================================
 
 	function addMessage(text, sender) {
-		console.log('📩 addMessage called, sender:', sender, 'text length:', text?.length);
 		const container = document.createElement('div');
 		container.className = `message-container ${sender}-container`;
 
@@ -460,14 +463,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			const items = [
 				...images.map((url, i) => ({ type: 'image', url, title: 'Photo', dataIndex: dataIndex++ })),
 				...videos.map((url, i) => ({ type: 'video', url, title: 'Video', dataIndex: dataIndex++ })),
-				...files.map(f => {
-					const fileName = f.url.split('/').pop().split('?')[0];
-					return { type: 'file', url: f.url, title: decodeURIComponent(fileName), dataIndex: dataIndex++ };
-				})
+				...files.map(f => ({ type: 'file', url: f.url, title: f.title || 'File', dataIndex: dataIndex++ }))
 			];
-			console.log('🔍 images found:', images.length, images);
-			console.log('🔍 videos found:', videos.length, videos);
-			console.log('🔍 items total:', items.length);
 
 			const itemDataMatches = text.match(/\[ITEM_DATA:\s*(.*?)\]/g);
 			let itemDataList = [];
@@ -541,7 +538,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	// ================================================
 
 	async function sendMessageToBackend() {
-		// voice!! speechSynthesis.cancel();
 		const message = chatbotInput.value.trim();
 		if (!message) return;
 
@@ -613,7 +609,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			const decoder = new TextDecoder();
 			let buffer = '', fullResponse = '';
 
-
 			const isMobile = window.innerWidth <= 600;
 			let panelOpened = isMobile;
 
@@ -649,7 +644,7 @@ document.addEventListener('DOMContentLoaded', function () {
 										...fils.map(f => ({
 											type: 'file',
 											url: f.url,
-											title: f.title  
+											title: f.title
 										}))
 									];
 									openMediaPanel(firstItems, fullResponse, []);
@@ -753,13 +748,13 @@ function closeMediaPanel() {
 	if (panel) {
 		const iframes = panel.querySelectorAll('iframe');
 		iframes.forEach(iframe => {
-			iframe.src = '';  
+			iframe.src = '';
 		});
 
 		const videos = panel.querySelectorAll('video');
 		videos.forEach(video => {
 			video.pause();
-			video.src = '';  
+			video.src = '';
 		});
 
 		panel.style.display = 'none';

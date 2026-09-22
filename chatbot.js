@@ -1,6 +1,5 @@
 // chatbot.js
 
-// DOM이 로드된 후 실행
 document.addEventListener('DOMContentLoaded', function () {
 	const toggleBtn = document.getElementById('chatbotToggleBtn');
 	const closeBtn = document.getElementById('chatbotCloseBtn');
@@ -14,84 +13,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 	const aiAvatarUrl = 'AI_assistant.png';
 	const userAvatarUrl = 'https://cdn-icons-png.flaticon.com/512/847/847969.png';
-
-	/*
-	const voiceBtn = document.getElementById('voiceInputBtn');
-
-	// ✅ 음성 모드 상태
-	let voiceMode = false;
-	const voiceModeBtn = document.getElementById('voiceModeBtn');
-
-	// 음성 모드 토글
-	voiceModeBtn?.addEventListener('click', () => {
-		voiceMode = !voiceMode;
-		if (voiceMode) {
-			voiceModeBtn.style.background = '#4cc9f0';
-			voiceModeBtn.title = 'Voice Mode ON';
-			voiceModeBtn.textContent = '🔊';
-		} else {
-			voiceModeBtn.style.background = 'rgba(255,255,255,0.2)';
-			voiceModeBtn.title = 'Voice Mode OFF';
-			voiceModeBtn.textContent = '🔇';
-			speechSynthesis.cancel();  // 음성 즉시 중지
-		}
-	});
-
-	// 음성 인식 설정
-	const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
-	let recognition = null;
-	let isListening = false;
-
-	if (SpeechRecognition) {
-		recognition = new SpeechRecognition();
-		recognition.lang = '';  // ✅ 빈 문자열 = 자동 감지
-		recognition.interimResults = false;
-
-		recognition.onresult = (event) => {
-			const transcript = event.results[0][0].transcript;
-			chatbotInput.value = transcript;
-			voiceBtn.textContent = '🎤';
-			isListening = false;
-			sendMessageToBackend();
-		};
-
-		recognition.onerror = () => {
-			voiceBtn.textContent = '🎤';
-			isListening = false;
-		};
-
-		recognition.onend = () => {
-			voiceBtn.textContent = '🎤';
-			isListening = false;
-		};
-	}
-
-	voiceBtn?.addEventListener('click', () => {
-		speechSynthesis.cancel();
-
-		if (!recognition) {
-			alert('Speech recognition is not supported in your browser.');
-			return;
-		}
-
-		// ✅ 음성 모드 자동 활성화
-		if (!voiceMode) {
-			voiceMode = true;
-			voiceModeBtn.style.background = '#4cc9f0';
-			voiceModeBtn.title = 'Voice Mode ON';
-			voiceModeBtn.textContent = '🔊';
-		}
-
-		if (isListening) {
-			recognition.stop();
-			voiceBtn.textContent = '🎤';
-			isListening = false;
-		} else {
-			recognition.start();
-			voiceBtn.textContent = '🔴';
-			isListening = true;
-		}
-	});*/
 
 	if (window.innerWidth <= 600) {
 		chatbotWindow.classList.add('initial-position');
@@ -118,7 +39,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		}
 	});
 
-	// ✅ 페이지 이탈/새로고침 시 음성 중지
 	window.addEventListener('beforeunload', () => {
 		speechSynthesis.cancel();
 	});
@@ -155,7 +75,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	});
 
 	// ================================================
-	// 유틸리티
+	// Utility
 	// ================================================
 
 	function getCurrentTime() {
@@ -168,8 +88,7 @@ document.addEventListener('DOMContentLoaded', function () {
 		let match;
 		while ((match = mdRegex.exec(text)) !== null) {
 			let url = match[1];
-			url = url.split('?')[0];  // ✅ ? 이후 제거
-			// ✅ Vimeo/YouTube URL은 이미지에서 제외
+			url = url.split('?')[0];  
 			if (!url.includes('vimeo.com') && !url.includes('youtube.com') && !url.includes('youtu.be')) {
 				urls.push(url);
 			}
@@ -177,9 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
 		const urlRegex = /(https?:\/\/[^\s]+\.(jpg|jpeg|png|gif|webp))/gi;
 		while ((match = urlRegex.exec(text)) !== null) {
 			let url = match[0];
-			url = url.split('?')[0];  // ✅ ? 이후 제거
+			url = url.split('?')[0];  
 			
-			// ✅ PDF, Vimeo, YouTube URL은 이미지에서 제외
 			if (!url.includes('vimeo.com') && !url.includes('youtube.com') && !url.includes('youtu.be') && !url.endsWith('.pdf')) {
 				if (!urls.includes(url)) urls.push(url);
 			}
@@ -190,7 +108,6 @@ document.addEventListener('DOMContentLoaded', function () {
 	function extractVideoUrls(text) {
 		const urls = [];
 
-		// ✅ 직접 비디오 파일 (.mp4, .mov, .webm, .avi)
 		const mdRegex = /\[.*?\]\((.*?\.(mp4|mov|webm|avi))\)/gi;
 		let match;
 		while ((match = mdRegex.exec(text)) !== null) urls.push(match[1]);
@@ -200,13 +117,11 @@ document.addEventListener('DOMContentLoaded', function () {
 			if (!urls.includes(match[0])) urls.push(match[0]);
 		}
 
-		// ✅ Vimeo 링크
 		const vimeoRegex = /(https?:\/\/player\.vimeo\.com\/video\/\d+[^\s]*)/gi;
 		while ((match = vimeoRegex.exec(text)) !== null) {
 			if (!urls.includes(match[0])) urls.push(match[0]);
 		}
 
-		// ✅ YouTube 링크
 		const youtubeRegex = /(https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[^\s&]+)/gi;
 		while ((match = youtubeRegex.exec(text)) !== null) {
 			if (!urls.includes(match[0])) urls.push(match[0]);
@@ -228,14 +143,12 @@ document.addEventListener('DOMContentLoaded', function () {
 	function extractFileUrls(text) {
 		const urls = [];
 
-		// 1. PDF 마크다운 링크
 		const mdRegex = /\[(.*?)\]\((https?:\/\/[^\s)]*\.pdf[^\s)]*)\)/gi;
 		let match;
 		while ((match = mdRegex.exec(text)) !== null) {
 			urls.push({ url: match[2], title: match[1] });
 		}
 
-		// ✅ 2. 📎 이모지로 시작하는 모든 외부 링크 인식
 		const emojiFileRegex = /\[📎\s*(.*?)\]\((https?:\/\/[^\s)]+)\)/gi;
 		while ((match = emojiFileRegex.exec(text)) !== null) {
 			if (!urls.find(u => u.url === match[2])) {
@@ -243,7 +156,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		}
 
-		// 3. Google Docs / Sheets / Slides
 		const googleDocsRegex = /\[(.*?)\]\((https?:\/\/docs\.google\.com\/[^\s)]+)\)/gi;
 		while ((match = googleDocsRegex.exec(text)) !== null) {
 			if (!urls.find(u => u.url === match[2])) {
@@ -251,7 +163,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		}
 
-		// 4. 일반 PDF URL (마크다운 없는 경우)
 		const urlRegex = /(https?:\/\/[^\s]+\.pdf[^\s)]*)/gi;
 		while ((match = urlRegex.exec(text)) !== null) {
 			if (!urls.find(u => u.url === match[0])) {
@@ -271,7 +182,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	// ================================================
-	// 미디어 패널
+	// Media panel
 	// ================================================
 
 	function openMediaPanel(mediaItems, infoText, itemDataList) {
@@ -283,10 +194,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		content.innerHTML = '';
 
-		// ✅ MAP 주소 확인
 		const mapAddresses = infoText ? extractMapUrls(infoText) : [];
 		
-		// ✅ 패널 제목 동적 설정
 		const hasMedia = mediaItems.length > 0;
 		const hasMap = mapAddresses.length > 0;
 		const hasFile = mediaItems.some(item => item.type === 'file');
@@ -313,7 +222,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			panelTitle.textContent = '📷 Media Preview';
 		}
 
-		// ✅ 중복 URL 제거
 		const uniqueItems = [];
 		const seenUrls = new Set();
 		mediaItems.forEach(item => {
@@ -324,12 +232,10 @@ document.addEventListener('DOMContentLoaded', function () {
 		});
 
 		uniqueItems.forEach((item, index) => {
-			// ✅ dataIndex로 itemDataList 참조
 			let displayTitle = item.title;
 			if (item.type !== 'file' && itemDataList && itemDataList[item.dataIndex]) {
 				displayTitle = itemDataList[item.dataIndex].title || item.title;
 			}
-			// 이미지/비디오 래퍼
 			const wrapper = document.createElement('div');
 			wrapper.className = 'media-item-wrapper';
 			wrapper.style.cssText = 'cursor:pointer;border-radius:12px;overflow:hidden;margin-bottom:12px;border:2px solid transparent;transition:border 0.2s;';
@@ -345,11 +251,9 @@ document.addEventListener('DOMContentLoaded', function () {
 				img.onclick = () => openFullscreenViewer(item.url, 'image');
 				wrapper.appendChild(img);
 			} else if (item.type === 'video') {
-				// ✅ Vimeo / YouTube / 비디오 파일 구분
 				if (item.url.includes('vimeo.com') || item.url.includes('youtube.com') || item.url.includes('youtu.be')) {
 					let embedUrl = item.url;
 
-					// YouTube → embed 변환
 					if (item.url.includes('youtube.com/watch?v=')) {
 						const videoId = new URL(item.url).searchParams.get('v');
 						embedUrl = `https://www.youtube.com/embed/${videoId}`;
@@ -372,7 +276,6 @@ document.addEventListener('DOMContentLoaded', function () {
 					video.preload = 'metadata';
 					video.style.cssText = 'width:100%;border-radius:12px;';
 					video.onclick = () => openFullscreenViewer(item.url, 'video');
-					// ✅ video 아래에 title 표시 추가
 					const titleLabel = document.createElement('div');
 					titleLabel.style.cssText = 'font-size:13px;color:#888;margin-top:4px;text-align:center;';
 					titleLabel.textContent = displayTitle;
@@ -382,7 +285,7 @@ document.addEventListener('DOMContentLoaded', function () {
 					source.type = `video/${getVideoType(item.url)}`;
 					video.appendChild(source);
 					wrapper.appendChild(video);
-					wrapper.appendChild(titleLabel);  // ✅ 제목 표시
+					wrapper.appendChild(titleLabel);  
 				}
 			} else if (item.type === 'file') {
 				const link = document.createElement('a');
@@ -391,12 +294,10 @@ document.addEventListener('DOMContentLoaded', function () {
 				link.style.cssText = 'display:flex;align-items:center;gap:8px;padding:12px;background:#f0f4ff;border-radius:8px;text-decoration:none;color:#4361ee;font-size:14px;';
 				link.innerHTML = `📎 <span>${displayTitle}</span> <span style="font-size:11px;color:#888;">(Click to open)</span>`;
 				wrapper.appendChild(link);
-				// ✅ content.appendChild(wrapper); ← 이 줄 삭제!
 			}
 
 			content.appendChild(wrapper);
 
-			// ✅ 해당 미디어의 ITEM_DATA 표시
 			if (itemDataList && itemDataList[item.dataIndex]) {
 				const data = itemDataList[item.dataIndex];
 				const infoDiv = document.createElement('div');
@@ -412,7 +313,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		});
 
-		// ✅ MAP 주소가 있으면 지도 표시
 		if (infoText) {
 			const mapAddresses = extractMapUrls(infoText);
 			if (mapAddresses.length > 0) {
@@ -443,11 +343,9 @@ document.addEventListener('DOMContentLoaded', function () {
 			}
 		}
 
-		// ✅ 위치 설정 - 모바일/데스크톱 분기
 		const rect = chatbotWindow.getBoundingClientRect();
 
 		if (isMobile) {
-			// 모바일: 전체 화면 오버레이
 			panel.style.top = '10px';
 			panel.style.left = '10px';
 			panel.style.right = '10px';
@@ -457,7 +355,6 @@ document.addEventListener('DOMContentLoaded', function () {
 			panel.style.borderRadius = '20px';
 			panel.style.zIndex = '10001';
 		} else {
-			// 데스크톱: 챗봇 왼쪽에 패널
 			panel.style.top = rect.top + 'px';
 			panel.style.left = (rect.left - 385) + 'px';
 			panel.style.right = 'auto';
@@ -476,7 +373,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	// ================================================
-	// 마크다운 변환
+	// Changing Markdown
 	// ================================================
 
 	function formatMarkdown(text) {
@@ -484,48 +381,37 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		let formatted = text;
 
-		// ✅ 이미지 → 완전 제거 (텍스트만 표시)
 		formatted = formatted.replace(/!\[.*?\]\(.*?\)(\n)?/g, '');
 
-		// ✅ 비디오(Vimeo/YouTube/직접 파일) → 아이콘으로만 표시
 		formatted = formatted.replace(/\[(.*?)\]\((.*?\.(mp4|mov|webm|avi))\)/gi, '🎬 <em>$1</em>');
 		formatted = formatted.replace(/\[(.*?)\]\((https?:\/\/player\.vimeo\.com\/[^)]+)\)/gi, '🎬 <em>$1</em>');
 		formatted = formatted.replace(/\[(.*?)\]\((https?:\/\/(www\.)?(youtube\.com\/watch\?v=|youtu\.be\/)[^)]+)\)/gi, '🎬 <em>$1</em>');
 
-		// ✅ 파일(PDF 등) → 아이콘으로만 표시 (파일명은 유지!)
 		formatted = formatted.replace(/\[📎\s*(.*?)\]\((https?:\/\/[^\s)]+)\)/gi, '📎 <em>$1</em>');
 		formatted = formatted.replace(/\[(.*?)\]\((.*?\.(pdf|doc|docx|xlsx|ppt|pptx))\)/gi, '📎 <em>$1</em>');
 
-		// ✅ [ITEM_DATA: ...], [MAP: ...] → 숨김
 		formatted = formatted.replace(/\[ITEM_DATA:\s*(.*?)\]/g, '');
 		formatted = formatted.replace(/\[MAP:\s*(.*?)\]/g, '');
 
-		// ✅ 빈 줄 정리
 		formatted = formatted.replace(/\n{3,}/g, '\n\n');
 		formatted = formatted.replace(/^\n+/, '');
 
-		// 4. **bold**
 		formatted = formatted.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
 
-		// 5. *italic*
 		formatted = formatted.replace(/\*(.*?)\*/g, '<em>$1</em>');
 
-		// 6. ## heading
 		formatted = formatted.replace(/^## (.*?)(\n|$)/gm, '<h3 style="margin:0 0 8px;font-size:16px;font-weight:600;">$1</h3>');
-		// ###
+		
 		formatted = formatted.replace(/^### (.*?)(\n|$)/gm, '<h4 style="margin:0 0 6px;font-size:14px;font-weight:600;">$1</h4>');
-		// 7. # heading → # 제거하고 heading 스타일만 적용
+
 		formatted = formatted.replace(/^# (.*?)(\n|$)/gm, '<h2 style="margin:0 0 10px;font-size:18px;font-weight:600;">$1</h2>');
 
-		// 8. list
 		formatted = formatted.replace(/^- (.*?)(\n|$)/gm, '<li style="margin-left:15px;margin-bottom:4px;">$1</li>');
 		formatted = formatted.replace(/^(\d+)\. (.*?)(\n|$)/gm, '<li style="margin-left:15px;margin-bottom:4px;">$2</li>');
 
-		// 9. 줄바꿈
 		formatted = formatted.replace(/\n\n/g, '<br><br>');
 		formatted = formatted.replace(/\n/g, '<br>');
 
-		// 10. <li> 감싸기
 		if (formatted.includes('<li>')) {
 			formatted = '<ul style="margin:8px 0;padding-left:20px;">' + formatted + '</ul>';
 		}
@@ -534,7 +420,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	// ================================================
-	// 메시지 추가
+	// adding Message
 	// ================================================
 
 	function addMessage(text, sender) {
@@ -566,7 +452,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		time.textContent = getCurrentTime();
 		content.appendChild(time);
 
-		// ✅ 미디어 패널 + 다시 열기 버튼 (time 아래에)
 		if (sender === 'bot') {
 			const images = extractImageUrls(text);
 			const videos = extractVideoUrls(text);
@@ -593,13 +478,11 @@ document.addEventListener('DOMContentLoaded', function () {
 				});
 			}
 
-			// ✅ MAP 주소 확인
 			const mapAddresses = extractMapUrls(text);
 			const hasFiles = files.length > 0;
 			const hasImages = images.length > 0;
 			const hasVideos = videos.length > 0;
 
-			// ✅ 미디어나 맵이 있으면 패널 열기
 			if (items.length > 0 || mapAddresses.length > 0) {
 				const uniqueItems = items.filter((item, index, self) =>
 					index === self.findIndex(t => t.url === item.url)
@@ -610,7 +493,6 @@ document.addEventListener('DOMContentLoaded', function () {
 				const reopenBtn = document.createElement('button');
 				reopenBtn.className = 'media-preview-btn';
 
-				// ✅ 버튼 텍스트 동적 설정
 				if (hasImages && hasVideos && hasFiles && mapAddresses.length > 0) {
 					reopenBtn.textContent = '📷🎬📎🗺️ View All';
 				} else if (hasFiles && mapAddresses.length > 0) {
@@ -637,29 +519,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		container.appendChild(content);
 
-		// ✅ "다시 듣기" 버튼만 남김
-		/* voice!! if (sender === 'bot') {
-			const cleanText = text
-				.replace(/\[MAP:.*?\]/g, '')
-				.replace(/\[ITEM_DATA:.*?\]/g, '')
-				.replace(/!\[.*?\]\(.*?\)/g, '')
-				.replace(/[*#]/g, '')
-				.replace(/<[^>]*>/g, '');
-
-			const speakBtn = document.createElement('button');
-			speakBtn.textContent = '🔊 Listen again';
-			speakBtn.title = 'Listen to response again';
-			speakBtn.style.cssText = 'background:none;border:none;cursor:pointer;font-size:12px;padding:2px 4px;margin-top:2px;color:#4361ee;';
-			speakBtn.onclick = () => {
-				speechSynthesis.cancel();
-				const utterance = new SpeechSynthesisUtterance(cleanText);
-				utterance.lang = /[가-힣]/.test(cleanText) ? 'ko-KR' : 'en-US';
-				utterance.rate = 1.0;
-				speechSynthesis.speak(utterance);
-			};
-			content.appendChild(speakBtn);
-		}*/
-
 		if (sender === 'user') {
 			const ua = document.createElement('div');
 			ua.className = 'avatar-container user-avatar';
@@ -678,7 +537,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	// ================================================
-	// 메시지 전송
+	// Sending Message
 	// ================================================
 
 	async function sendMessageToBackend() {
@@ -689,7 +548,6 @@ document.addEventListener('DOMContentLoaded', function () {
 		addMessage(message, 'user');
 		chatbotInput.value = '';
 
-		// 로딩
 		const loadContainer = document.createElement('div');
 		loadContainer.className = 'message-container bot-container';
 		const loadAvatar = document.createElement('div');
@@ -754,9 +612,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			const reader = response.body.getReader();
 			const decoder = new TextDecoder();
 			let buffer = '', fullResponse = '';
-			// 스트리밍 중 음성 읽기를 위한 변수
-			let voiceQueue = '';
-			let voiceTimeout = null;
+
 
 			const isMobile = window.innerWidth <= 600;
 			let panelOpened = isMobile;
@@ -764,9 +620,7 @@ document.addEventListener('DOMContentLoaded', function () {
 			while (true) {
 				const { done, value } = await reader.read();
 				if (done) {
-					// ✅ 스트리밍 중 보여준 응답 제거
 					respContainer.remove();
-					// ✅ addMessage로 bot 응답 추가 (패널, 버튼 자동 처리)
 					addMessage(fullResponse, 'bot');
 
 					if (window.innerWidth > 600) chatbotInput.focus();
@@ -783,7 +637,6 @@ document.addEventListener('DOMContentLoaded', function () {
 							fullResponse += d.content;
 							respDiv.innerHTML = formatMarkdown(fullResponse);
 							chatbotMessages.scrollTop = chatbotMessages.scrollHeight;
-							// ✅ 첫 번째 미디어 발견 즉시 패널 열기
 							if (!panelOpened && fullResponse.length > 100) {
 								const imgs = extractImageUrls(fullResponse);
 								const vids = extractVideoUrls(fullResponse);
@@ -796,7 +649,7 @@ document.addEventListener('DOMContentLoaded', function () {
 										...fils.map(f => ({
 											type: 'file',
 											url: f.url,
-											title: f.title  // ✅ 마크다운 title 사용
+											title: f.title  
 										}))
 									];
 									openMediaPanel(firstItems, fullResponse, []);
@@ -804,29 +657,6 @@ document.addEventListener('DOMContentLoaded', function () {
 								}
 							}
 
-							// ✅ 문장 단위로 실시간 음성 읽기
-							/* voice!! if (voiceMode) {
-								voiceQueue += d.content;
-
-								// 문장 종료 문자(. ! ? \n)가 나오면 읽기
-								if (/[.!?\n]$/.test(voiceQueue) && voiceQueue.trim().length > 10) {
-									clearTimeout(voiceTimeout);
-									const textToSpeak = voiceQueue
-										.replace(/\[MAP:.*?\]/g, '')
-										.replace(/\[ITEM_DATA:.*?\]/g, '')
-										.replace(/!\[.*?\]\(.*?\)/g, '')
-										.replace(/[*#]/g, '')
-										.trim();
-
-									if (textToSpeak.length > 5) {
-										const utterance = new SpeechSynthesisUtterance(textToSpeak);
-										utterance.lang = /[가-힣]/.test(textToSpeak) ? 'ko-KR' : 'en-US';
-										utterance.rate = 1.1;
-										speechSynthesis.speak(utterance);
-									}
-									voiceQueue = '';
-								}
-							}*/
 						} else if (d.type === 'error') {
 							respDiv.textContent = `Error: ${d.content}`;
 							reader.cancel();
@@ -864,7 +694,7 @@ document.addEventListener('DOMContentLoaded', function () {
 	}
 
 	// ================================================
-	// 웰컴 메시지
+	// Welcome Message
 	// ================================================
 
 	function showWelcomeMessage() {
@@ -901,8 +731,8 @@ document.addEventListener('DOMContentLoaded', function () {
 			<div class="quick-questions-title">Quick questions:</div>
 			<button class="quick-btn" data-question="Can you tell me how I can get to Northfield Mount Hermon?">🚗 How to get here</button>
 			<button class="quick-btn" data-question="What is the application process? What documents do I need to complete and submit, and what is the deadline?">📝 Application Process</button>
-			<button class="quick-btn" data-question="What are the key school events taking place this month?">📅 School Events</button>
-			<button class="quick-btn" data-question="What facilities does Northfield Mount Hermon have?">🏫 School Facilities</button>
+			<button class="quick-btn" data-question="What are the key NMH News taking place this month?">📅 School Events</button>
+			<button class="quick-btn" data-question="Tell me about actual school life at Northfield Mount Hermon?">🏫 Campus Life</button>
 			<button class="quick-btn" data-question="How much does it cost to attend Northfield Mount Hermon School? What is the tuition?">🏫 Tuition</button>`;
 		chatbotMessages.appendChild(qq);
 		qq.querySelectorAll('.quick-btn').forEach(btn => {
@@ -918,28 +748,24 @@ document.addEventListener('DOMContentLoaded', function () {
 	setTimeout(showWelcomeMessage, 1000);
 });
 
-// 전역 함수로 등록 (HTML onclick에서 호출 가능하게)
 function closeMediaPanel() {
 	const panel = document.getElementById('mediaSlidePanel');
 	if (panel) {
-		// ✅ 패널 안의 모든 iframe 정지 (Vimeo/YouTube)
 		const iframes = panel.querySelectorAll('iframe');
 		iframes.forEach(iframe => {
-			iframe.src = '';  // src 제거 → 비디오 중지
+			iframe.src = '';  
 		});
 
-		// ✅ video 태그도 정지
 		const videos = panel.querySelectorAll('video');
 		videos.forEach(video => {
 			video.pause();
-			video.src = '';  // src 제거
+			video.src = '';  
 		});
 
 		panel.style.display = 'none';
 	}
 }
 
-// 전역: 전체화면 뷰어
 function openFullscreenViewer(src, type) {
 	const overlay = document.createElement('div');
 	overlay.style.cssText = 'position:fixed;top:0;left:0;width:100vw;height:100vh;background:rgba(0,0,0,0.9);z-index:99999;display:flex;align-items:center;justify-content:center;cursor:pointer;';

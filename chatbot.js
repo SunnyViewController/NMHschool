@@ -258,7 +258,23 @@ document.addEventListener('DOMContentLoaded', function () {
 				if (item.url.includes('vimeo.com') || item.url.includes('youtube.com') || item.url.includes('youtu.be')) {
 					let embedUrl = item.url;
 
-					if (item.url.includes('youtube.com/watch?v=')) {
+					// Vimeo: convert to player.vimeo.com format
+					if (item.url.includes('vimeo.com')) {
+						// Extract video ID from various Vimeo URL formats
+						let videoId = null;
+
+						// Format: https://vimeo.com/123456789
+						const vimeoMatch = item.url.match(/vimeo\.com\/(\d+)/);
+						if (vimeoMatch) {
+							videoId = vimeoMatch[1];
+						}
+
+						if (videoId) {
+							embedUrl = `https://player.vimeo.com/video/${videoId}`;
+						}
+					}
+					// YouTube
+					else if (item.url.includes('youtube.com/watch?v=')) {
 						const videoId = new URL(item.url).searchParams.get('v');
 						embedUrl = `https://www.youtube.com/embed/${videoId}`;
 					} else if (item.url.includes('youtu.be/')) {
@@ -273,8 +289,10 @@ document.addEventListener('DOMContentLoaded', function () {
 					iframe.style.cssText = 'border:0;border-radius:12px;';
 					iframe.allowFullscreen = true;
 					iframe.loading = 'lazy';
+					iframe.allow = 'autoplay; fullscreen; picture-in-picture';
 					wrapper.appendChild(iframe);
 				} else {
+					// Direct video files (.mp4, .mov, etc.)
 					const video = document.createElement('video');
 					video.controls = true;
 					video.preload = 'metadata';

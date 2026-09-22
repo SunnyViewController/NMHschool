@@ -698,7 +698,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
 		const requestData = {
 			message: message,
-			school_id: "2ZQLb1N7bafnESAPXauOIL2y0m03",
+			school_id: "g43iWISB87NdD9Hmbe95BchTJVs1",
 			user_id: "anonymous",
 			history: conversationMemory.slice(-10)
 		};
